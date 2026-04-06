@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <div id="mensagemAdmin" class="mensagem-admin"></div>
+
+  <h2>Configuração da Loja</h2>
+
+  <input type="text" id="nomeLoja" placeholder="Nome da loja" maxlength="60">
+  <input type="text" id="whatsLoja" placeholder="WhatsApp da loja (somente números)" maxlength="20">
+  <input type="text" id="instagramLoja" placeholder="Instagram da loja" maxlength="50">
+  <input type="text" id="enderecoLoja" placeholder="Endereço da loja" maxlength="100">
+
+  <textarea id="descricaoLoja" placeholder="Descrição da loja" maxlength="500"></textarea>
+
+  <input type="file" id="capaLoja">
+
+  <img
+    id="previewCapaLoja"
+    alt="Preview da capa da loja"
+    style="max-width: 300px; display: none; margin: 15px auto; border-radius: 12px;"
+  >
+
+  <button id="btnSalvarLoja">Salvar Configuração</button>
+
+  <hr>
+
+  <button onclick="logout()">Sair</button>
+
+  <h1>Painel Admin</h1>
+
+  <input type="text" id="nome" placeholder="Nome da categoria" maxlength="40">
+  <input type="file" id="imagem">
+
+  <img
+    id="previewCategoria"
+    alt="Preview da categoria"
+    style="max-width: 220px; display: none; margin: 15px auto; border-radius: 12px;"
+  >
+
+  <button id="btnSalvar">Salvar</button>
+
+  <input type="text" id="buscaAdmin" placeholder="Buscar categoria ou item...">
+
+  <h2>Categorias cadastradas</h2>
+  <div id="listaCategorias"></div>
+
+  <h2>Adicionar item à categoria</h2>
+
+  <input type="text" id="nomeItem" placeholder="Nome do item" maxlength="50">
+  <input type="text" id="precoItem" placeholder="0,00" maxlength="15">
+  <input type="file" id="imagemItem">
+
+  <img
+    id="previewItem"
+    alt="Preview do item"
+    style="max-width: 220px; display: none; margin: 15px auto; border-radius: 12px;"
+  >
+
+  <select id="categoriaSelect"></select>
+
+  <button id="btnAddItem">Adicionar Item</button>
+
+  <div id="modalConfirm" class="modal">
+    <div class="modal-content">
+      <h3 id="modalTitulo">Confirmação</h3>
+      <p id="modalTexto"></p>
+
+      <input
+        type="password"
+        id="modalSenha"
+        placeholder="Digite a senha"
+        style="display:none;"
+      >
+
+      <div class="modal-botoes">
+        <button id="btnCancelarModal">Cancelar</button>
+        <button id="btnConfirmarModal">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
+
+
+

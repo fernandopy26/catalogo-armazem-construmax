@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- SEO básico -->
+  <title>Catálogo da Loja</title>
+  <meta name="description" content="Confira nossos produtos organizados por categoria. Qualidade e variedade para você!">
+
+  <!-- Favicon -->
+  <link rel="icon" href="favicon.ico">
+
+  <!-- Open Graph (WhatsApp, Facebook, etc) -->
+  <meta property="og:title" content="Catálogo da Loja">
+  <meta property="og:description" content="Confira nossos produtos organizados por categoria.">
+  <meta property="og:image" content="https://ibb.co/277KfRSv">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://github.com/fernandopy26">
+
+  <!-- Twitter (opcional, mas bom) -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Catálogo da Loja">
+  <meta name="twitter:description" content="Confira nossos produtos organizados por categoria.">
+  <meta name="twitter:image" content="https://SEU-LINK-DA-IMAGEM-AQUI.jpg">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="hero">
+    <div class="hero-overlay"></div>
+
+    <div id="topoLoja" class="hero-content">
+      <img id="capaLojaImg" alt="Capa da loja">
+      <div class="hero-texto">
+        <span class="tag-loja">Catálogo digital</span>
+        <h1 id="nomeLoja">Minha Loja</h1>
+        <p class="subtitulo-loja">Produtos organizados por categoria</p>
+        
+        <a 
+          id="btnCompartilhar" 
+          class="btn-compartilhar" 
+          href="#"
+        >
+          🔗 Compartilhar catálogo
+        </a>
+
+
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+
+
+
+    <section id="sobreLoja" class="sobre-loja" style="display: none;">
+      <div class="sobre-box">
+        <h2>Sobre a loja</h2>
+        <p id="descricaoLojaTexto"></p>
+
+        <div class="info-loja">
+
+          <div id="enderecoBox" class="endereco-box" style="display: none;">
+            <p id="enderecoLojaTexto" class="info-linha"></p>
+
+            <a
+              id="mapaLojaLink"
+              class="mapa-link"
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+              style="display: none;"
+            >
+              <iframe
+                id="mapaLojaFrame"
+                class="mapa-frame"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+              ></iframe>
+
+              <div class="mapa-overlay">
+                Abrir no Google Maps
+              </div>
+            </a>
+          </div>
+
+          <div class="info-linha botoes-loja">
+
+            <a 
+              id="instagramLojaLink" 
+              class="btn-instagram"
+              href="#" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style="display: none;"
+            >
+              📸 Instagram
+            </a>
+
+            <a 
+              id="btnWhatsSobre" 
+              class="btn-whatsapp-topo" 
+              href="#" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style="display: none;"
+            >
+              💬 WhatsApp
+            </a>
+
+          </div>
+
+        </div> <!-- 🔥 FECHAMENTO CORRETO -->
+
+      </div>
+    </section>
+
+    <section class="barra-superior">
+      <div class="busca-box">
+        <input type="text" id="campoBusca" placeholder="Buscar item ou categoria...">
+      </div>
+    </section>
+
+    <div class="filtro-wrapper">
+
+      <button id="btnTodas" class="filtro-btn ativo">Todas</button>
+
+      <button class="filtro-seta" id="btnFiltroEsq">‹</button>
+
+      <section id="filtroCategorias" class="filtro-categorias"></section>
+
+      <button class="filtro-seta" id="btnFiltroDir">›</button>
+
+    </div>
+
+    <section id="categorias"></section>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

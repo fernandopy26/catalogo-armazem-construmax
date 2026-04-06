@@ -1,0 +1,597 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  color: white;
+  margin: 0;
+  padding: 0;
+
+  background: 
+    linear-gradient(rgba(15,17,21,0.85), rgba(15,17,21,0.9)),
+    url('https://images.unsplash.com/photo-1509023464722-18d996393ca8');
+
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.hero {
+  position: relative;
+  min-height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, #161a22, #0f1115);
+  padding: 30px 20px;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.20),
+    rgba(0, 0, 0, 0.45)
+  );
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 28px;
+  align-items: center;
+}
+
+#capaLojaImg {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 24px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+  background: #1d212b;
+}
+
+.hero-texto {
+  text-align: left;
+}
+
+.tag-loja {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.08);
+  color: #dfe7ff;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+
+#nomeLoja {
+  margin: 0;
+  font-size: 42px;
+  line-height: 1.1;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.subtitulo-loja {
+  margin-top: 14px;
+  color: #c7cfdd;
+  font-size: 17px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 18px 40px;
+}
+
+.barra-superior {
+  margin-top: -1px;
+  margin-bottom: 28px;
+  position: relative;
+  z-index: 2;
+}
+
+.busca-box {
+  background: rgba(27, 31, 41, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+#campoBusca {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  outline: none;
+  border-radius: 12px;
+  font-size: 16px;
+  background: #10141c;
+  color: white;
+}
+
+#campoBusca::placeholder {
+  color: #96a0b4;
+}
+
+.categoria {
+  background: linear-gradient(180deg, #1a1d24, #13171e);
+  margin: 26px 0;
+  padding: 22px;
+  border-radius: 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(200, 155, 60, 0.15);
+}
+
+.categoria-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.categoria-titulo-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.categoria-bolinha {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #c89b3c; /* dourado madeira */
+  box-shadow: 0 0 14px rgba(123, 176, 255, 0.7);
+}
+
+.categoria h2 {
+  margin: 0;
+  font-size: 26px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.categoria-capa {
+  margin-bottom: 18px;
+}
+
+.categoria-capa img {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 18px;
+  display: block;
+}
+
+.carrossel-wrapper {
+  position: relative;
+}
+
+.itens-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 6px 2px 10px;
+}
+
+.itens-scroll::-webkit-scrollbar {
+  height: 10px;
+}
+
+.itens-scroll::-webkit-scrollbar-thumb {
+  background: #343c4d;
+  border-radius: 999px;
+}
+
+.item-card {
+  flex: 0 0 auto;
+  width: 220px;
+  background: linear-gradient(180deg, #202632, #171c25);
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.item-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.30);
+}
+
+.item-card img {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+
+.item-nome {
+  margin: 12px 0 6px;
+  font-size: 15px;
+  font-weight: bold;
+  color: #ffffff;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+.item-preco {
+  margin: 0;
+  font-size: 15px;
+  color: #d4a84f;
+  font-weight: bold;
+}
+
+.setas-carrossel {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-seta {
+  border: none;
+  cursor: pointer;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  font-size: 22px;
+  color: white;
+  background: #252b38;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-seta:hover {
+  transform: scale(1.06);
+  background: #31394a;
+}
+
+.sem-resultado {
+  background: #181c24;
+  padding: 24px;
+  border-radius: 18px;
+  text-align: center;
+  color: #c7cfdd;
+  margin-top: 25px;
+}
+
+@media (max-width: 900px) {
+  .hero-content {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-texto {
+    text-align: center;
+  }
+
+  #nomeLoja {
+    font-size: 34px;
+  }
+
+  .categoria-capa img {
+    height: 200px;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero {
+    min-height: auto;
+    padding-top: 22px;
+  }
+
+  #capaLojaImg {
+    height: 220px;
+  }
+
+  #nomeLoja {
+    font-size: 28px;
+  }
+
+  .subtitulo-loja {
+    font-size: 15px;
+  }
+
+  .categoria {
+    padding: 16px;
+  }
+
+  .categoria h2 {
+    font-size: 22px;
+  }
+
+  .item-card {
+    width: 180px;
+  }
+
+  .item-card img {
+    height: 145px;
+  }
+}
+
+.mensagem-admin {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  min-width: 260px;
+  max-width: 360px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 9999;
+}
+
+.mensagem-admin.mostrar {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.mensagem-admin.sucesso {
+  background: #1f8f4d;
+}
+
+.mensagem-admin.erro {
+  background: #c0392b;
+}
+
+.mensagem-admin.aviso {
+  background: #b9770e;
+}
+
+.btn-whatsapp {
+  display: inline-block;
+  margin-top: 12px;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+  background: #25d366;
+  color: white;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: bold;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-whatsapp:hover {
+  transform: translateY(-2px);
+  opacity: 0.95;
+}
+
+.btn-whatsapp-topo {
+  display: inline-block;
+  margin-top: 18px;
+  text-decoration: none;
+  background: #25d366;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: bold;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-whatsapp-topo:hover {
+  transform: translateY(-2px);
+  opacity: 0.95;
+}
+
+.item-card-destaque {
+  border: 2px solid #8ff0a4;
+  box-shadow: 0 0 18px rgba(143, 240, 164, 0.35);
+  transform: translateY(-2px);
+}
+
+.filtro-categorias {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 0 20px;
+}
+
+.filtro-btn {
+  border: none;
+  background: #252b38;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.filtro-btn:hover {
+  background: #31394a;
+}
+
+.filtro-btn.ativo {
+  background: #25d366;
+  color: #000;
+  font-weight: bold;
+}
+
+.filtro-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filtro-categorias {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  flex: 1;
+}
+
+.filtro-seta {
+  border: none;
+  background: #252b38;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.filtro-seta:hover {
+  background: #31394a;
+}
+
+#btnTodas {
+  flex-shrink: 0;
+}
+
+.sobre-loja {
+  margin: 10px 0 30px;
+}
+
+.sobre-box {
+  background: linear-gradient(180deg, #181c24, #13171e);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+}
+
+.sobre-box h2 {
+  margin-top: 0;
+  margin-bottom: 14px;
+  font-size: 28px;
+}
+
+.sobre-box p {
+  color: #d7deea;
+  line-height: 1.6;
+}
+
+.info-loja {
+  margin-top: 18px;
+  margin-bottom: 18px;
+}
+
+.info-linha {
+  margin: 10px 0;
+  font-size: 16px;
+  color: #d7deea;
+}
+
+#instagramLojaLink {
+  color: #8ab4ff;
+  text-decoration: none;
+  font-weight: bold;
+  transition: opacity 0.15s ease;
+}
+
+#instagramLojaLink:hover {
+  opacity: 0.85;
+  text-decoration: underline;
+}
+
+.endereco-box {
+  margin: 14px 0 20px;
+}
+
+.mapa-link {
+  display: block;
+  position: relative;
+  margin-top: 12px;
+  border-radius: 16px;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.mapa-frame {
+  width: 100%;
+  height: 280px;
+  border: 0;
+  display: block;
+  filter: saturate(0.95) contrast(1.02);
+}
+
+.mapa-overlay {
+  position: absolute;
+  inset: auto 12px 12px 12px;
+  background: rgba(0, 0, 0, 0.68);
+  color: white;
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: bold;
+  transition: opacity 0.15s ease;
+}
+
+.mapa-link:hover .mapa-overlay {
+  opacity: 0.9;
+}
+
+.btn-instagram {
+  display: inline-block;
+  margin-top: 18px;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+  background: linear-gradient(45deg, #f58529, #dd2a7b, #8134af);
+  color: white;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: bold;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-instagram:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+.botoes-loja {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.botoes-loja a {
+  flex: 1;
+  text-align: center;
+}
+
+.btn-compartilhar {
+  display: inline-block;
+  margin-top: 12px;
+  background: #3a2c1a; /* marrom moderno */
+  color: white;
+  padding: 10px 16px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-compartilhar:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
+  opacity: 0.15;
+  pointer-events: none;
+}
