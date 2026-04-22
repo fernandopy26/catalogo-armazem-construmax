@@ -5,21 +5,27 @@
    ========================================================= */
 
 :root {
-  --bg-base: #0a0d12;
-  --bg-surface: #13181f;
-  --bg-surface-2: #1a2029;
-  --bg-elevated: #20283340;
+  /* Paleta nogueira + latão */
+  --bg-base: #0a0806;
+  --bg-surface: #17120c;
+  --bg-surface-2: #1f1811;
+  --bg-elevated: #2a2118;
 
-  --border: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.10);
+  --wood-deep: #0f0a06;
+  --wood-mid: #1a130c;
+  --wood-warm: #2a1f13;
 
-  --text-1: #f5f7fa;
-  --text-2: #b8c0cc;
-  --text-3: #737c8a;
+  --border: rgba(212, 160, 69, 0.10);
+  --border-strong: rgba(212, 160, 69, 0.22);
+
+  --text-1: #f5eee0;
+  --text-2: #c2b5a0;
+  --text-3: #7d6f5a;
 
   --accent: #d4a045;
-  --accent-soft: #e3b968;
-  --accent-glow: rgba(212, 160, 69, 0.18);
+  --accent-soft: #ebc478;
+  --accent-deep: #a77a2d;
+  --accent-glow: rgba(212, 160, 69, 0.22);
 
   --whats: #22c55e;
   --whats-hover: #16a34a;
@@ -58,28 +64,35 @@ body {
   overflow-x: hidden;
 }
 
+/* Fundo: madeira nogueira com iluminação quente vinda do canto + vinheta */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -2;
+  z-index: -3;
   background:
-    radial-gradient(1200px 600px at 15% -10%, rgba(212, 160, 69, 0.08), transparent 60%),
-    radial-gradient(900px 500px at 100% 0%, rgba(80, 120, 255, 0.05), transparent 60%),
-    linear-gradient(180deg, #0b0e13 0%, #0a0d12 100%);
+    radial-gradient(1400px 700px at 85% -10%, rgba(212, 160, 69, 0.14), transparent 60%),
+    radial-gradient(1000px 600px at 10% 100%, rgba(90, 55, 25, 0.20), transparent 65%),
+    radial-gradient(ellipse at center, transparent 45%, rgba(6, 4, 2, 0.5) 100%),
+    linear-gradient(165deg, #110c08 0%, #0a0806 45%, #080604 100%);
 }
 
+/* Camada de grão de madeira — gerada via SVG, sem imagem externa */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: -2;
   background-image:
-    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.035) 1px, transparent 0);
-  background-size: 28px 28px;
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='400'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.42' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42  0 0 0 0 0.26  0 0 0 0 0.12  0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.28  0 0 0 0 0.20  0 0 0 0 0.10  0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 1200px auto, 220px 220px;
+  background-position: center;
+  opacity: 0.35;
   pointer-events: none;
-  mask-image: linear-gradient(180deg, black 0%, black 40%, transparent 90%);
+  mix-blend-mode: overlay;
 }
+
 
 /* =========================================================
    Splash de abertura
@@ -92,7 +105,11 @@ body::after {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at center, #141821 0%, #08090c 70%);
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(212, 160, 69, 0.10), transparent 55%),
+    radial-gradient(ellipse at center, #1a130c 0%, #0a0806 72%),
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='500'%3E%3Cfilter id='sp'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.011 0.38' numOctaves='3' seed='21' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.28  0 0 0 0 0.13  0 0 0 0.60 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23sp)'/%3E%3C/svg%3E");
+  background-size: auto, auto, 1200px auto;
   transition: opacity 0.8s var(--ease), visibility 0.8s var(--ease);
 }
 
@@ -206,22 +223,30 @@ body::after {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(800px 400px at 80% 20%, rgba(212, 160, 69, 0.10), transparent 70%),
-    linear-gradient(180deg, rgba(12, 15, 20, 0.2), rgba(10, 13, 18, 0.85));
+    radial-gradient(900px 450px at 85% 15%, rgba(235, 196, 120, 0.18), transparent 65%),
+    radial-gradient(600px 300px at 10% 90%, rgba(167, 122, 45, 0.10), transparent 70%),
+    linear-gradient(180deg, rgba(26, 19, 12, 0.4), rgba(10, 8, 6, 0.92)),
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='500'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.010 0.32' numOctaves='4' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.48  0 0 0 0 0.30  0 0 0 0 0.15  0 0 0 0.75 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: auto, auto, auto, cover;
   z-index: 0;
 }
 
+/* Régua de latão na borda inferior do hero */
 .hero::after {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 1px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(212, 160, 69, 0.35) 50%,
-    transparent 100%);
+  height: 2px;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(235, 196, 120, 0.15) 15%,
+      rgba(212, 160, 69, 0.55) 50%,
+      rgba(235, 196, 120, 0.15) 85%,
+      transparent 100%);
+  box-shadow: 0 0 24px rgba(212, 160, 69, 0.25);
   z-index: 1;
 }
 
@@ -242,7 +267,9 @@ body::after {
   position: relative;
   border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 0 0 1px rgba(235, 196, 120, 0.14);
   opacity: 0;
   transform: translateY(20px) scale(0.98);
   animation: heroIn 1s var(--ease) forwards 0.15s;
@@ -252,8 +279,29 @@ body::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 55%, rgba(0, 0, 0, 0.35));
+  background: linear-gradient(180deg, transparent 55%, rgba(10, 8, 6, 0.45));
   pointer-events: none;
+}
+
+/* Moldura de latão ao redor da capa */
+.hero-media::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    rgba(235, 196, 120, 0.45) 0%,
+    rgba(212, 160, 69, 0.15) 40%,
+    transparent 60%,
+    rgba(167, 122, 45, 0.25) 100%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
 }
 
 #capaLojaImg {
@@ -319,10 +367,11 @@ body::after {
   letter-spacing: -0.025em;
   overflow-wrap: break-word;
   word-break: break-word;
-  background: linear-gradient(180deg, #ffffff 0%, #cfd5df 100%);
+  background: linear-gradient(180deg, #fbf4e3 0%, #d8c8aa 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  text-shadow: 0 1px 20px rgba(212, 160, 69, 0.08);
 }
 
 .subtitulo-loja {
@@ -339,7 +388,7 @@ body::after {
   align-items: center;
   gap: 10px;
   margin-top: 26px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(42, 31, 19, 0.6);
   color: var(--text-1);
   padding: 12px 20px;
   border-radius: 12px;
@@ -353,8 +402,8 @@ body::after {
 
 .btn-compartilhar:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(212, 160, 69, 0.30);
+  background: rgba(212, 160, 69, 0.15);
+  border-color: rgba(212, 160, 69, 0.45);
 }
 
 .btn-compartilhar svg {
@@ -382,11 +431,14 @@ body::after {
 }
 
 .sobre-box {
-  background: linear-gradient(180deg, var(--bg-surface), #10141b);
+  background:
+    linear-gradient(180deg, rgba(31, 24, 17, 0.92), rgba(15, 10, 6, 0.94)),
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='300'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.38' numOctaves='3' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.50  0 0 0 0 0.32  0 0 0 0 0.15  0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  background-size: auto, 700px auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   padding: 32px;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(235, 196, 120, 0.05);
   position: relative;
   overflow: hidden;
 }
@@ -398,7 +450,7 @@ body::after {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(212, 160, 69, 0.35), transparent);
+  background: linear-gradient(90deg, transparent, rgba(235, 196, 120, 0.4), transparent);
 }
 
 .sobre-box h2 {
@@ -461,7 +513,7 @@ body::after {
 .mapa-overlay {
   position: absolute;
   inset: auto 12px 12px 12px;
-  background: rgba(10, 13, 18, 0.85);
+  background: rgba(15, 10, 6, 0.88);
   backdrop-filter: blur(8px);
   color: var(--text-1);
   text-align: center;
@@ -671,16 +723,20 @@ body::after {
    ========================================================= */
 
 .categoria {
-  background: linear-gradient(180deg, var(--bg-surface), #10141b);
+  background:
+    linear-gradient(180deg, rgba(31, 24, 17, 0.94), rgba(15, 10, 6, 0.96)),
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='300'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.014 0.40' numOctaves='3' seed='13' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.28  0 0 0 0 0.14  0 0 0 0.50 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)'/%3E%3C/svg%3E");
+  background-size: auto, 700px auto;
   margin: 28px 0;
   padding: 26px;
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(235, 196, 120, 0.06);
   border: 1px solid var(--border);
   position: relative;
   opacity: 0;
   transform: translateY(24px);
   transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+  overflow: hidden;
 }
 
 .categoria.revelada {
@@ -695,7 +751,7 @@ body::after {
   left: 26px;
   right: 26px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(212, 160, 69, 0.25), transparent);
+  background: linear-gradient(90deg, transparent, rgba(235, 196, 120, 0.35), transparent);
 }
 
 .categoria-topo {
@@ -713,12 +769,19 @@ body::after {
   gap: 14px;
 }
 
+/* Rebite de latão */
 .categoria-bolinha {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 14px var(--accent-glow);
+  background: radial-gradient(circle at 30% 30%,
+    #f6d68a 0%,
+    var(--accent) 45%,
+    var(--accent-deep) 100%);
+  box-shadow:
+    0 0 14px var(--accent-glow),
+    inset 0 1px 1px rgba(255, 230, 180, 0.6),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.35);
   flex-shrink: 0;
 }
 
@@ -787,7 +850,7 @@ body::after {
 }
 
 .itens-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(212, 160, 69, 0.35);
 }
 
 /* Item */
@@ -795,10 +858,13 @@ body::after {
 .item-card {
   flex: 0 0 auto;
   width: 230px;
-  background: linear-gradient(180deg, #1c232d, #141922);
+  background:
+    linear-gradient(180deg, rgba(42, 31, 19, 0.85), rgba(22, 16, 10, 0.92)),
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Cfilter id='i'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.015 0.45' numOctaves='2' seed='17' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42  0 0 0 0 0.26  0 0 0 0 0.12  0 0 0 0.45 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23i)'/%3E%3C/svg%3E");
+  background-size: auto, 500px auto;
   border-radius: var(--radius-lg);
   padding: 12px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(235, 196, 120, 0.08);
   transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease),
     border-color 0.28s var(--ease);
   border: 1px solid var(--border);
@@ -835,7 +901,7 @@ body::after {
   object-fit: cover;
   border-radius: var(--radius-md);
   display: block;
-  background: #0f131a;
+  background: var(--wood-deep);
 }
 
 .item-nome {
@@ -932,7 +998,10 @@ body::after {
    ========================================================= */
 
 .sem-resultado {
-  background: var(--bg-surface);
+  background:
+    linear-gradient(180deg, rgba(31, 24, 17, 0.92), rgba(15, 10, 6, 0.94)),
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='300'%3E%3Cfilter id='e'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.013 0.40' numOctaves='3' seed='19' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.28  0 0 0 0 0.14  0 0 0 0.50 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23e)'/%3E%3C/svg%3E");
+  background-size: auto, 700px auto;
   padding: 48px 24px;
   border-radius: var(--radius-xl);
   text-align: center;
@@ -955,7 +1024,7 @@ body::after {
 }
 
 .skeleton-categoria {
-  background: linear-gradient(180deg, var(--bg-surface), #10141b);
+  background: linear-gradient(180deg, rgba(31, 24, 17, 0.9), rgba(15, 10, 6, 0.92));
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   padding: 26px;
@@ -966,9 +1035,9 @@ body::after {
   height: 20px;
   border-radius: 8px;
   background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0.09) 50%,
-    rgba(255, 255, 255, 0.04) 100%);
+    rgba(212, 160, 69, 0.04) 0%,
+    rgba(212, 160, 69, 0.12) 50%,
+    rgba(212, 160, 69, 0.04) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s infinite linear;
   margin-bottom: 18px;
@@ -978,9 +1047,9 @@ body::after {
   height: 240px;
   border-radius: var(--radius-lg);
   background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.04) 100%);
+    rgba(212, 160, 69, 0.04) 0%,
+    rgba(212, 160, 69, 0.10) 50%,
+    rgba(212, 160, 69, 0.04) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s infinite linear;
   margin-bottom: 20px;
@@ -997,9 +1066,9 @@ body::after {
   height: 300px;
   border-radius: var(--radius-lg);
   background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.04) 100%);
+    rgba(212, 160, 69, 0.04) 0%,
+    rgba(212, 160, 69, 0.10) 50%,
+    rgba(212, 160, 69, 0.04) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s infinite linear;
 }
@@ -1060,16 +1129,31 @@ body::after {
 .footer {
   margin-top: 60px;
   padding: 36px 20px 40px;
-  border-top: 1px solid var(--border);
+  position: relative;
   text-align: center;
   color: var(--text-3);
   font-size: 13px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+}
+
+.footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(320px, 60%);
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(212, 160, 69, 0.50),
+    transparent);
 }
 
 .footer strong {
-  color: var(--text-2);
-  font-weight: 500;
+  color: var(--accent-soft);
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 /* =========================================================
