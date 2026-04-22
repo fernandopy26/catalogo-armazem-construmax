@@ -12,6 +12,22 @@ const campoBusca = document.getElementById("campoBusca");
 let dadosCatalogo = [];
 let whatsappLoja = "";
 let categoriaSelecionada = null;
+let revealObserver = null;
+
+const ICON_WHATS = `
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M20.52 3.48A12 12 0 0 0 3.48 20.52L2 22l1.58-1.44A12 12 0 1 0 20.52 3.48zm-8.5 17.3a9.34 9.34 0 0 1-4.77-1.3l-.34-.2-2.82.74.76-2.75-.22-.35a9.36 9.36 0 1 1 7.39 3.86zm5.4-6.98c-.3-.15-1.74-.86-2.01-.96s-.47-.15-.67.15-.77.96-.94 1.16-.35.22-.65.07a7.65 7.65 0 0 1-2.25-1.39 8.46 8.46 0 0 1-1.56-1.94c-.16-.3 0-.45.13-.6.13-.13.3-.35.44-.52s.17-.3.27-.5.05-.37 0-.52-.67-1.62-.93-2.22c-.24-.58-.49-.5-.67-.5h-.57a1.1 1.1 0 0 0-.8.37 3.37 3.37 0 0 0-1.05 2.5c0 1.48 1.08 2.9 1.23 3.1s2.12 3.24 5.13 4.55a17 17 0 0 0 1.7.63 4.1 4.1 0 0 0 1.88.12 3.08 3.08 0 0 0 2.02-1.43 2.5 2.5 0 0 0 .18-1.43c-.07-.12-.27-.2-.57-.34z"/>
+  </svg>
+`;
+
+function escaparHTML(texto) {
+  return String(texto ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 function formatarPreco(valor) {
   if (!valor) return "Preço não informado";
@@ -40,7 +56,6 @@ async function carregarConfigLoja() {
 
     const nomeLoja = document.getElementById("nomeLoja");
     const capaLojaImg = document.getElementById("capaLojaImg");
-    const btnWhatsTopo = document.getElementById("btnWhatsTopo");
     const btnWhatsSobre = document.getElementById("btnWhatsSobre");
     const sobreLoja = document.getElementById("sobreLoja");
     const descricaoLojaTexto = document.getElementById("descricaoLojaTexto");
@@ -49,28 +64,31 @@ async function carregarConfigLoja() {
     const mapaLojaLink = document.getElementById("mapaLojaLink");
     const mapaLojaFrame = document.getElementById("mapaLojaFrame");
     const instagramLojaLink = document.getElementById("instagramLojaLink");
+    const splashNome = document.getElementById("splashNome");
+    const nomeLojaRodape = document.getElementById("nomeLojaRodape");
 
-    nomeLoja.textContent = data.nome || "Minha Loja";
+    const nomeFinal = data.nome || "Minha Loja";
+
+    nomeLoja.textContent = nomeFinal;
     capaLojaImg.src = data.capa || "";
     whatsappLoja = (data.whatsapp || "").replace(/\D/g, "");
 
-    document.title = data.nome || "Catálogo da Loja";
+    document.title = nomeFinal;
+    if (splashNome) splashNome.textContent = nomeFinal;
+    if (nomeLojaRodape) nomeLojaRodape.textContent = nomeFinal;
 
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute(
         "content",
-        `Confira os produtos da ${data.nome || "loja"}. Veja nosso catálogo completo!`
+        `Confira os produtos da ${nomeFinal}. Veja nosso catálogo completo!`
       );
     }
 
     if (whatsappLoja) {
       const linkWhats = gerarLinkWhatsAppLoja();
-
-
-
       btnWhatsSobre.href = linkWhats;
-      btnWhatsSobre.style.display = "inline-block";
+      btnWhatsSobre.style.display = "inline-flex";
     }
 
     const temDescricao = !!data.descricao;
@@ -86,12 +104,14 @@ async function carregarConfigLoja() {
         const linkMaps = gerarLinkMaps(data.endereco);
 
         enderecoBox.style.display = "block";
-        enderecoLojaTexto.innerHTML = `📍 <strong>Endereço:</strong> ${data.endereco}`;
+        enderecoLojaTexto.innerHTML =
+          `📍 <strong>Endereço:</strong> ${escaparHTML(data.endereco)}`;
 
         mapaLojaLink.href = linkMaps;
         mapaLojaLink.style.display = "block";
 
-        mapaLojaFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(data.endereco)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+        mapaLojaFrame.src =
+          `https://maps.google.com/maps?q=${encodeURIComponent(data.endereco)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
       } else {
         enderecoBox.style.display = "none";
         enderecoLojaTexto.innerHTML = "";
@@ -102,7 +122,7 @@ async function carregarConfigLoja() {
 
       if (data.instagram) {
         instagramLojaLink.href = gerarLinkInstagram(data.instagram);
-        instagramLojaLink.style.display = "inline-block";
+        instagramLojaLink.style.display = "inline-flex";
       } else {
         instagramLojaLink.style.display = "none";
         instagramLojaLink.href = "#";
@@ -167,7 +187,6 @@ function renderizarFiltroCategorias() {
       renderizarCatalogo(campoBusca.value);
       renderizarFiltroCategorias();
 
-      // 🔥 tira o destaque do "Todas"
       document.getElementById("btnTodas").classList.remove("ativo");
     };
 
@@ -196,18 +215,22 @@ function criarCardItem(item, textoBusca = "") {
   const nomeItem = String(item.nome || "").toLowerCase();
   const encontrou = textoBusca && nomeItem.includes(textoBusca.toLowerCase());
 
+  const nomeSafe = escaparHTML(item.nome);
+  const imagemSafe = escaparHTML(item.imagem);
+
   return `
     <div class="item-card ${encontrou ? "item-card-destaque" : ""}">
-      <img src="${item.imagem}" alt="${item.nome}">
-      <p class="item-nome">${item.nome}</p>
+      <img src="${imagemSafe}" alt="${nomeSafe}" loading="lazy">
+      <p class="item-nome">${nomeSafe}</p>
       <p class="item-preco">${formatarPreco(item.preco)}</p>
-      <a 
-        class="btn-whatsapp" 
-        href="${linkWhatsApp}" 
-        target="_blank" 
+      <a
+        class="btn-whatsapp"
+        href="${linkWhatsApp}"
+        target="_blank"
         rel="noopener noreferrer"
       >
-        Falar no WhatsApp
+        ${ICON_WHATS}
+        WhatsApp
       </a>
     </div>
   `;
@@ -297,21 +320,24 @@ function renderizarCatalogo(filtro = "") {
       ? categoria.itens.map((item) => criarCardItem(item, texto)).join("")
       : "<p>Nenhum item cadastrado.</p>";
 
+    const nomeCategoriaSafe = escaparHTML(categoria.nome);
+    const imagemCategoriaSafe = escaparHTML(categoria.imagem);
+
     categoriaHTML.innerHTML = `
       <div class="categoria-topo">
         <div class="categoria-titulo-box">
           <span class="categoria-bolinha"></span>
-          <h2>${categoria.nome}</h2>
+          <h2>${nomeCategoriaSafe}</h2>
         </div>
 
         <div class="setas-carrossel">
-          <button class="btn-seta" data-direcao="esquerda" data-alvo="${scrollId}">‹</button>
-          <button class="btn-seta" data-direcao="direita" data-alvo="${scrollId}">›</button>
+          <button class="btn-seta" data-direcao="esquerda" data-alvo="${scrollId}" aria-label="Rolar para esquerda">‹</button>
+          <button class="btn-seta" data-direcao="direita" data-alvo="${scrollId}" aria-label="Rolar para direita">›</button>
         </div>
       </div>
 
       <div class="categoria-capa">
-        <img src="${categoria.imagem}" alt="${categoria.nome}">
+        <img src="${imagemCategoriaSafe}" alt="${nomeCategoriaSafe}" loading="lazy">
       </div>
 
       <div class="carrossel-wrapper">
@@ -322,6 +348,7 @@ function renderizarCatalogo(filtro = "") {
     `;
 
     container.appendChild(categoriaHTML);
+    observarParaRevelar(categoriaHTML);
   });
 
   ativarSetas();
@@ -348,6 +375,96 @@ function ativarSetas() {
   });
 }
 
+/* =========================================================
+   Animações e UX
+   ========================================================= */
+
+function configurarObserverRevelar() {
+  if (!("IntersectionObserver" in window)) return;
+
+  revealObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("revelada");
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+  );
+}
+
+function observarParaRevelar(elemento) {
+  if (!revealObserver) {
+    elemento.classList.add("revelada");
+    return;
+  }
+  revealObserver.observe(elemento);
+}
+
+function configurarScrollProgress() {
+  const barra = document.getElementById("scrollProgress");
+  const btnTopo = document.getElementById("btnVoltarTopo");
+  if (!barra && !btnTopo) return;
+
+  let ticking = false;
+
+  const atualizar = () => {
+    const scroll = window.scrollY;
+    const altura = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = altura > 0 ? (scroll / altura) * 100 : 0;
+
+    if (barra) barra.style.width = `${pct}%`;
+
+    if (btnTopo) {
+      if (scroll > 480) btnTopo.classList.add("visivel");
+      else btnTopo.classList.remove("visivel");
+    }
+
+    ticking = false;
+  };
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!ticking) {
+        window.requestAnimationFrame(atualizar);
+        ticking = true;
+      }
+    },
+    { passive: true }
+  );
+
+  atualizar();
+}
+
+function configurarVoltarTopo() {
+  const btn = document.getElementById("btnVoltarTopo");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+}
+
+function ocultarSplash() {
+  const splash = document.getElementById("splashScreen");
+  if (!splash) return;
+
+  splash.classList.add("fade-out");
+  setTimeout(() => splash.remove(), 900);
+}
+
+function preencherAno() {
+  const el = document.getElementById("anoAtual");
+  if (el) el.textContent = new Date().getFullYear();
+}
+
+/* =========================================================
+   Inputs principais
+   ========================================================= */
+
 campoBusca.addEventListener("input", (e) => {
   renderizarCatalogo(e.target.value);
 });
@@ -360,21 +477,12 @@ document.getElementById("btnTodas").onclick = () => {
   document.getElementById("btnTodas").classList.add("ativo");
 };
 
-async function iniciar() {
-  await carregarConfigLoja();
-  await carregarDados();
-  renderizarCatalogo();
-  renderizarFiltroCategorias();
-  ativarSetasFiltro();
-}
-
 document.getElementById("btnCompartilhar").addEventListener("click", async (e) => {
   e.preventDefault();
 
   const url = window.location.href;
   const titulo = document.title;
 
-  // 🔥 Se o navegador suportar compartilhamento nativo
   if (navigator.share) {
     try {
       await navigator.share({
@@ -386,10 +494,38 @@ document.getElementById("btnCompartilhar").addEventListener("click", async (e) =
       console.log("Compartilhamento cancelado");
     }
   } else {
-    // fallback → WhatsApp
     const link = `https://wa.me/?text=${encodeURIComponent(titulo + " " + url)}`;
     window.open(link, "_blank");
   }
 });
+
+/* =========================================================
+   Bootstrap
+   ========================================================= */
+
+async function iniciar() {
+  configurarObserverRevelar();
+  configurarScrollProgress();
+  configurarVoltarTopo();
+  preencherAno();
+
+  try {
+    await carregarConfigLoja();
+    await carregarDados();
+    renderizarCatalogo();
+    renderizarFiltroCategorias();
+    ativarSetasFiltro();
+  } catch (err) {
+    console.error("Erro ao carregar o catálogo:", err);
+    container.innerHTML = `
+      <div class="sem-resultado">
+        <h3>Não foi possível carregar o catálogo</h3>
+        <p>Verifique sua conexão e tente novamente em instantes.</p>
+      </div>
+    `;
+  } finally {
+    ocultarSplash();
+  }
+}
 
 iniciar();

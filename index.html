@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0d12">
 
   <!-- SEO básico -->
   <title>Catálogo da Loja</title>
@@ -16,7 +17,7 @@
   <meta property="og:description" content="Confira nossos produtos organizados por categoria.">
   <meta property="og:image" content="https://ibb.co/277KfRSv">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://github.com/fernandopy26">
+  <meta property="og:url" content="http://construmax.nekostudio.pro">
 
   <!-- Twitter (opcional, mas bom) -->
   <meta name="twitter:card" content="summary_large_image">
@@ -24,37 +25,59 @@
   <meta name="twitter:description" content="Confira nossos produtos organizados por categoria.">
   <meta name="twitter:image" content="https://SEU-LINK-DA-IMAGEM-AQUI.jpg">
 
+  <!-- Preconnect para performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com">
+  <link rel="preconnect" href="https://firestore.googleapis.com">
+
+  <!-- Tipografia -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- Splash de abertura -->
+  <div id="splashScreen" aria-hidden="true">
+    <div class="splash-inner">
+      <div class="splash-orb"></div>
+      <span class="splash-label">Carregando catálogo</span>
+      <span id="splashNome" class="splash-name">Minha Loja</span>
+    </div>
+  </div>
+
+  <!-- Barra de progresso de scroll -->
+  <div id="scrollProgress"></div>
 
   <header class="hero">
     <div class="hero-overlay"></div>
 
     <div id="topoLoja" class="hero-content">
-      <img id="capaLojaImg" alt="Capa da loja">
+      <div class="hero-media">
+        <img id="capaLojaImg" alt="Capa da loja">
+      </div>
+
       <div class="hero-texto">
         <span class="tag-loja">Catálogo digital</span>
         <h1 id="nomeLoja">Minha Loja</h1>
-        <p class="subtitulo-loja">Produtos organizados por categoria</p>
-        
-        <a 
-          id="btnCompartilhar" 
-          class="btn-compartilhar" 
-          href="#"
-        >
-          🔗 Compartilhar catálogo
+        <p class="subtitulo-loja">Produtos organizados por categoria, prontos para você descobrir.</p>
+
+        <a id="btnCompartilhar" class="btn-compartilhar" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="18" cy="5" r="3"/>
+            <circle cx="6" cy="12" r="3"/>
+            <circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+          Compartilhar catálogo
         </a>
-
-
       </div>
     </div>
   </header>
 
   <main class="container">
-
-
-
 
     <section id="sobreLoja" class="sobre-loja" style="display: none;">
       <div class="sobre-box">
@@ -81,45 +104,54 @@
                 referrerpolicy="no-referrer-when-downgrade"
               ></iframe>
 
-              <div class="mapa-overlay">
-                Abrir no Google Maps
-              </div>
+              <div class="mapa-overlay">Abrir no Google Maps</div>
             </a>
           </div>
 
           <div class="info-linha botoes-loja">
 
-            <a 
-              id="instagramLojaLink" 
+            <a
+              id="instagramLojaLink"
               class="btn-instagram"
-              href="#" 
-              target="_blank" 
+              href="#"
+              target="_blank"
               rel="noopener noreferrer"
               style="display: none;"
             >
-              📸 Instagram
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+              </svg>
+              Instagram
             </a>
 
-            <a 
-              id="btnWhatsSobre" 
-              class="btn-whatsapp-topo" 
-              href="#" 
-              target="_blank" 
+            <a
+              id="btnWhatsSobre"
+              class="btn-whatsapp-topo"
+              href="#"
+              target="_blank"
               rel="noopener noreferrer"
               style="display: none;"
             >
-              💬 WhatsApp
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.52 3.48A12 12 0 0 0 3.48 20.52L2 22l1.58-1.44A12 12 0 1 0 20.52 3.48zm-8.5 17.3a9.34 9.34 0 0 1-4.77-1.3l-.34-.2-2.82.74.76-2.75-.22-.35a9.36 9.36 0 1 1 7.39 3.86zm5.4-6.98c-.3-.15-1.74-.86-2.01-.96s-.47-.15-.67.15-.77.96-.94 1.16-.35.22-.65.07a7.65 7.65 0 0 1-2.25-1.39 8.46 8.46 0 0 1-1.56-1.94c-.16-.3 0-.45.13-.6.13-.13.3-.35.44-.52s.17-.3.27-.5.05-.37 0-.52-.67-1.62-.93-2.22c-.24-.58-.49-.5-.67-.5h-.57a1.1 1.1 0 0 0-.8.37 3.37 3.37 0 0 0-1.05 2.5c0 1.48 1.08 2.9 1.23 3.1s2.12 3.24 5.13 4.55a17 17 0 0 0 1.7.63 4.1 4.1 0 0 0 1.88.12 3.08 3.08 0 0 0 2.02-1.43 2.5 2.5 0 0 0 .18-1.43c-.07-.12-.27-.2-.57-.34z"/>
+              </svg>
+              WhatsApp
             </a>
 
           </div>
 
-        </div> <!-- 🔥 FECHAMENTO CORRETO -->
-
+        </div>
       </div>
     </section>
 
     <section class="barra-superior">
       <div class="busca-box">
+        <svg class="busca-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
         <input type="text" id="campoBusca" placeholder="Buscar item ou categoria...">
       </div>
     </section>
@@ -128,15 +160,50 @@
 
       <button id="btnTodas" class="filtro-btn ativo">Todas</button>
 
-      <button class="filtro-seta" id="btnFiltroEsq">‹</button>
+      <button class="filtro-seta" id="btnFiltroEsq" aria-label="Rolar filtros à esquerda">‹</button>
 
       <section id="filtroCategorias" class="filtro-categorias"></section>
 
-      <button class="filtro-seta" id="btnFiltroDir">›</button>
+      <button class="filtro-seta" id="btnFiltroDir" aria-label="Rolar filtros à direita">›</button>
 
     </div>
 
-    <section id="categorias"></section>
+    <section id="categorias">
+      <!-- Skeleton enquanto o Firebase carrega -->
+      <div class="skeleton-categoria" data-skeleton>
+        <div class="skeleton-bar" style="width: 40%;"></div>
+        <div class="skeleton-capa"></div>
+        <div class="skeleton-cards">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+      </div>
+      <div class="skeleton-categoria" data-skeleton>
+        <div class="skeleton-bar" style="width: 30%;"></div>
+        <div class="skeleton-capa"></div>
+        <div class="skeleton-cards">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <button id="btnVoltarTopo" aria-label="Voltar ao topo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="18 15 12 9 6 15"/>
+    </svg>
+  </button>
+
+  <footer class="footer">
+    <p>© <span id="anoAtual"></span> <strong id="nomeLojaRodape">Minha Loja</strong> · Catálogo digital</p>
+  </footer>
 
   <script type="module" src="app.js"></script>
 </body>
