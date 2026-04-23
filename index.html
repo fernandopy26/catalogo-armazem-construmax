@@ -68,16 +68,26 @@
         <h1 id="nomeLoja">Minha Loja</h1>
         <p class="subtitulo-loja">Produtos organizados por categoria, prontos para você descobrir.</p>
 
-        <a id="btnCompartilhar" class="btn-compartilhar" href="#">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="18" cy="5" r="3"/>
-            <circle cx="6" cy="12" r="3"/>
-            <circle cx="18" cy="19" r="3"/>
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-          </svg>
-          Compartilhar catálogo
-        </a>
+        <div class="hero-acoes">
+          <a id="btnCompartilhar" class="btn-compartilhar" href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="18" cy="5" r="3"/>
+              <circle cx="6" cy="12" r="3"/>
+              <circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            Compartilhar
+          </a>
+
+          <button id="btnAbrirCarrinho" class="btn-carrinho-hero" aria-label="Ver carrinho de compras">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+            <span id="carrinhoContador" class="carrinho-badge" aria-label="itens no carrinho">0</span>
+          </button>
+        </div>
       </div>
     </div>
   </header>
@@ -209,6 +219,72 @@
   <footer class="footer">
     <p>© <span id="anoAtual"></span> <strong id="nomeLojaRodape">Minha Loja</strong> · Catálogo digital</p>
   </footer>
+
+  <!-- Carrinho de compras -->
+  <div id="carrinhoOverlay" class="carrinho-overlay" aria-hidden="true">
+    <div id="carrinhoPanel" class="carrinho-panel" role="dialog" aria-modal="true" aria-label="Carrinho de compras">
+
+      <div class="carrinho-header">
+        <div class="carrinho-header-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          <h2>Carrinho <span id="carrinhoHeaderCount" class="carrinho-header-count"></span></h2>
+        </div>
+        <button id="btnFecharCarrinho" class="btn-fechar-carrinho" aria-label="Fechar carrinho">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Estado vazio -->
+      <div id="carrinhoVazio" class="carrinho-vazio" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+        </svg>
+        <p class="carrinho-vazio-titulo">Seu carrinho está vazio</p>
+        <p class="carrinho-vazio-sub">Adicione produtos ao carrinho e envie seu pedido pelo WhatsApp.</p>
+      </div>
+
+      <!-- Lista de itens -->
+      <div id="carrinhoLista" class="carrinho-lista"></div>
+
+      <!-- Rodapé com total, pagamento e botão comprar -->
+      <div id="carrinhoRodape" class="carrinho-rodape" style="display:none">
+        <div class="carrinho-subtotal">
+          <span>Total estimado</span>
+          <strong id="carrinhoTotal">R$ 0,00</strong>
+        </div>
+
+        <div class="carrinho-pagamento-box">
+          <label for="formaPagamento">Forma de pagamento</label>
+          <select id="formaPagamento" class="carrinho-select">
+            <option value="Pix">Pix</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Cartão de débito">Cartão de débito</option>
+            <option value="Cartão de crédito">Cartão de crédito</option>
+          </select>
+        </div>
+
+        <p class="carrinho-aviso-limite" id="carrinhoAvisoLimite"></p>
+
+        <button id="btnComprar" class="btn-comprar">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M20.52 3.48A12 12 0 0 0 3.48 20.52L2 22l1.58-1.44A12 12 0 1 0 20.52 3.48zm-8.5 17.3a9.34 9.34 0 0 1-4.77-1.3l-.34-.2-2.82.74.76-2.75-.22-.35a9.36 9.36 0 1 1 7.39 3.86zm5.4-6.98c-.3-.15-1.74-.86-2.01-.96s-.47-.15-.67.15-.77.96-.94 1.16-.35.22-.65.07a7.65 7.65 0 0 1-2.25-1.39 8.46 8.46 0 0 1-1.56-1.94c-.16-.3 0-.45.13-.6.13-.13.3-.35.44-.52s.17-.3.27-.5.05-.37 0-.52-.67-1.62-.93-2.22c-.24-.58-.49-.5-.67-.5h-.57a1.1 1.1 0 0 0-.8.37 3.37 3.37 0 0 0-1.05 2.5c0 1.48 1.08 2.9 1.23 3.1s2.12 3.24 5.13 4.55a17 17 0 0 0 1.7.63 4.1 4.1 0 0 0 1.88.12 3.08 3.08 0 0 0 2.02-1.43 2.5 2.5 0 0 0 .18-1.43c-.07-.12-.27-.2-.57-.34z"/>
+          </svg>
+          Comprar via WhatsApp
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast de confirmação de item adicionado -->
+  <div id="toastCarrinho" class="toast-carrinho" aria-live="polite" aria-atomic="true"></div>
 
   <script type="module" src="app.js"></script>
 </body>
