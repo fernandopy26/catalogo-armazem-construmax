@@ -317,19 +317,19 @@ function renderizarCategorias(filtro = "") {
     const div = document.createElement("div");
     div.className = "categoria-admin";
     div.innerHTML = `
-      <img src="${categoria.imagem}" width="120"><br><br>
-
-      <input type="text" id="categoria-nome-${categoria.id}" value="${categoria.nome || ""}" placeholder="Nome da categoria" maxlength="40">
-
-      <div class="botoes-categoria">
-        <button onclick="salvarEdicaoCategoria('${categoria.id}')">Salvar categoria</button>
-        <button onclick="trocarImagemCategoria('${categoria.id}')">Trocar imagem</button>
-        <button onclick="toggleItens('${categoria.id}', '${escapeAspas(textoBusca)}')">Abrir itens</button>
-        <button onclick="excluirCategoria('${categoria.id}')">Excluir categoria</button>
+      <div class="cat-card-header">
+        <img src="${categoria.imagem}" class="cat-thumb" alt="${categoria.nome || ""}">
+        <div class="cat-card-body">
+          <input type="text" id="categoria-nome-${categoria.id}" value="${categoria.nome || ""}" placeholder="Nome da categoria" maxlength="40">
+        </div>
+        <div class="botoes-categoria">
+          <button class="btn-sm btn-primary" onclick="salvarEdicaoCategoria('${categoria.id}')">Salvar</button>
+          <button class="btn-sm btn-outline" onclick="trocarImagemCategoria('${categoria.id}')">Imagem</button>
+          <button class="btn-sm btn-outline" onclick="toggleItens('${categoria.id}', '${escapeAspas(textoBusca)}')">Itens</button>
+          <button class="btn-sm btn-danger" onclick="excluirCategoria('${categoria.id}')">Excluir</button>
+        </div>
       </div>
-
-      <div id="itens-${categoria.id}" class="area-itens" style="display:${abrirAutomaticamente ? "block" : "none"}; margin-top: 15px;"></div>
-      <hr>
+      <div id="itens-${categoria.id}" class="area-itens" style="display:${abrirAutomaticamente ? "block" : "none"};"></div>
     `;
 
     container.appendChild(div);
@@ -356,23 +356,23 @@ function renderizarItensDaCategoria(categoriaId, textoBusca = "") {
     return;
   }
 
-  let html = `<h4>Itens da categoria</h4>`;
+  let html = `<p class="area-itens-titulo">${categoria.itens.length} ${categoria.itens.length === 1 ? "item" : "itens"}</p>`;
 
   categoria.itens.forEach((item) => {
     const nomeItem = String(item.nome || "").toLowerCase();
     const encontrou = textoBusca && nomeItem.includes(textoBusca);
 
     html += `
-      <div class="item-admin ${encontrou ? "item-destaque" : ""}" style="margin-bottom:15px;">
-        <img src="${item.imagem}" width="100"><br>
-
-        <input type="text" id="nome-${item.id}" value="${item.nome || ""}" placeholder="Nome do item" maxlength="50">
-        <input type="text" id="preco-${item.id}" value="${item.preco || ""}" placeholder="0,00" maxlength="15">
-
+      <div class="item-admin ${encontrou ? "item-destaque" : ""}">
+        <img src="${item.imagem}" class="item-thumb" alt="${item.nome || ""}">
+        <div class="item-fields">
+          <input type="text" id="nome-${item.id}" value="${item.nome || ""}" placeholder="Nome do item" maxlength="50">
+          <input type="text" id="preco-${item.id}" value="${item.preco || ""}" placeholder="0,00" maxlength="15">
+        </div>
         <div class="botoes-item">
-          <button onclick="salvarEdicaoItem('${categoriaId}', '${item.id}')">Salvar alterações</button>
-          <button onclick="trocarImagemItem('${categoriaId}', '${item.id}')">Trocar imagem</button>
-          <button onclick="excluirItem('${categoriaId}', '${item.id}')">Excluir item</button>
+          <button class="btn-sm btn-primary" onclick="salvarEdicaoItem('${categoriaId}', '${item.id}')">Salvar</button>
+          <button class="btn-sm btn-outline" onclick="trocarImagemItem('${categoriaId}', '${item.id}')">Imagem</button>
+          <button class="btn-sm btn-danger" onclick="excluirItem('${categoriaId}', '${item.id}')">Excluir</button>
         </div>
       </div>
     `;

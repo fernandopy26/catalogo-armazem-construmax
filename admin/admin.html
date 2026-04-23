@@ -3,88 +3,323 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin</title>
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="color-scheme" content="dark">
+  <title>Painel Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
 
-  <div id="mensagemAdmin" class="mensagem-admin"></div>
+  <!-- Toast de notificação -->
+  <div id="mensagemAdmin" class="mensagem-admin" role="alert" aria-live="polite"></div>
 
-  <h2>Configuração da Loja</h2>
+  <!-- Barra superior -->
+  <header class="admin-topbar">
+    <div class="topbar-logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Painel Admin
+    </div>
+    <nav class="topbar-nav">
+      <a href="../index.html" target="_blank" rel="noopener" class="btn-nav">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        Ver catálogo
+      </a>
+      <a href="estatisticas.html" class="btn-nav btn-nav-stats">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+        Estatísticas
+      </a>
+      <button onclick="logout()" class="btn-nav btn-nav-logout">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sair
+      </button>
+    </nav>
+  </header>
 
-  <input type="text" id="nomeLoja" placeholder="Nome da loja" maxlength="60">
-  <input type="text" id="whatsLoja" placeholder="WhatsApp da loja (somente números)" maxlength="20">
-  <input type="text" id="instagramLoja" placeholder="Instagram da loja" maxlength="50">
-  <input type="text" id="enderecoLoja" placeholder="Endereço da loja" maxlength="100">
+  <div class="admin-wrapper">
 
-  <textarea id="descricaoLoja" placeholder="Descrição da loja" maxlength="500"></textarea>
+    <!-- ══ Configuração da Loja ══ -->
+    <section class="admin-section">
+      <div class="section-header">
+        <div class="section-title-group">
+          <div class="section-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+              <path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="section-title">Configuração da Loja</h2>
+            <p class="section-desc">Dados gerais, contato e imagem de capa do catálogo</p>
+          </div>
+        </div>
+      </div>
 
-  <input type="file" id="capaLoja">
+      <div class="section-body">
+        <div class="form-grid-2">
 
-  <img
-    id="previewCapaLoja"
-    alt="Preview da capa da loja"
-    style="max-width: 300px; display: none; margin: 15px auto; border-radius: 12px;"
-  >
+          <!-- Coluna esquerda: campos de texto -->
+          <div class="form-col">
+            <div class="field-group">
+              <label class="field-label" for="nomeLoja">Nome da loja</label>
+              <input type="text" id="nomeLoja" placeholder="Ex: Construmax Materiais" maxlength="60" autocomplete="off">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="whatsLoja">WhatsApp</label>
+              <div class="input-icon-wrap">
+                <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M20.52 3.48A12 12 0 0 0 3.48 20.52L2 22l1.58-1.44A12 12 0 1 0 20.52 3.48z"/>
+                </svg>
+                <input type="text" id="whatsLoja" placeholder="Somente números, ex: 41999887766" maxlength="20" autocomplete="off">
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="instagramLoja">Instagram</label>
+              <div class="input-icon-wrap">
+                <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                  <rect x="2" y="2" width="20" height="20" rx="5"/>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+                <input type="text" id="instagramLoja" placeholder="@nomedaloja ou link completo" maxlength="50" autocomplete="off">
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="enderecoLoja">Endereço</label>
+              <div class="input-icon-wrap">
+                <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+                <input type="text" id="enderecoLoja" placeholder="Rua, número, bairro, cidade" maxlength="100" autocomplete="off">
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="descricaoLoja">Descrição</label>
+              <textarea id="descricaoLoja" placeholder="Conte um pouco sobre a sua loja…" maxlength="500" rows="4"></textarea>
+              <span class="field-hint">Máximo 500 caracteres</span>
+            </div>
+          </div>
 
-  <button id="btnSalvarLoja">Salvar Configuração</button>
+          <!-- Coluna direita: capa -->
+          <div class="form-col">
+            <div class="field-group">
+              <label class="field-label">Imagem de capa</label>
+              <div class="preview-box">
+                <img id="previewCapaLoja" alt="Preview da capa" style="display:none;">
+                <div class="preview-placeholder">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                  <span>Nenhuma imagem selecionada</span>
+                </div>
+              </div>
+              <label for="capaLoja" class="file-input-label">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Selecionar imagem de capa
+              </label>
+              <input type="file" id="capaLoja" accept="image/*" style="display:none;">
+            </div>
+          </div>
+        </div>
 
-  <hr>
+        <div class="section-footer">
+          <button id="btnSalvarLoja" class="btn-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Salvar configuração
+          </button>
+        </div>
+      </div>
+    </section>
 
-  <a href="estatisticas.html" style="display:inline-block;margin:5px;padding:10px 20px;background:#c89b3c;color:#1a1404;border-radius:8px;text-decoration:none;font-weight:bold;font-family:Arial,sans-serif;">
-    📊 Estatísticas
-  </a>
-  <button onclick="logout()">Sair</button>
+    <!-- ══ Nova Categoria ══ -->
+    <section class="admin-section">
+      <div class="section-header">
+        <div class="section-title-group">
+          <div class="section-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="section-title">Nova Categoria</h2>
+            <p class="section-desc">Organize seus produtos em categorias</p>
+          </div>
+        </div>
+      </div>
 
-  <h1>Painel Admin</h1>
+      <div class="section-body">
+        <div class="form-row form-row-cat">
+          <div class="field-group fg-grow">
+            <label class="field-label" for="nome">Nome da categoria</label>
+            <input type="text" id="nome" placeholder="Ex: Cimentos, Tintas, Ferramentas…" maxlength="40" autocomplete="off">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Imagem da categoria</label>
+            <div class="file-row">
+              <label for="imagem" class="file-input-label file-label-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                Escolher
+              </label>
+              <input type="file" id="imagem" accept="image/*" style="display:none;">
+              <img id="previewCategoria" class="preview-thumb" alt="Preview" style="display:none;">
+            </div>
+          </div>
+          <div class="field-group field-btn">
+            <label class="field-label">&nbsp;</label>
+            <button id="btnSalvar" class="btn-primary">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Criar categoria
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  <input type="text" id="nome" placeholder="Nome da categoria" maxlength="40">
-  <input type="file" id="imagem">
+    <!-- ══ Catálogo ══ -->
+    <section class="admin-section">
+      <div class="section-header section-header-row">
+        <div class="section-title-group">
+          <div class="section-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="section-title">Catálogo</h2>
+            <p class="section-desc">Gerencie categorias e produtos</p>
+          </div>
+        </div>
+        <div class="search-wrap">
+          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="buscaAdmin" placeholder="Buscar categoria ou item…">
+        </div>
+      </div>
 
-  <img
-    id="previewCategoria"
-    alt="Preview da categoria"
-    style="max-width: 220px; display: none; margin: 15px auto; border-radius: 12px;"
-  >
+      <div class="section-body">
+        <div id="listaCategorias"></div>
+      </div>
+    </section>
 
-  <button id="btnSalvar">Salvar</button>
+    <!-- ══ Adicionar Item ══ -->
+    <section class="admin-section">
+      <div class="section-header">
+        <div class="section-title-group">
+          <div class="section-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+              <line x1="12" y1="12" x2="12.01" y2="12"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="section-title">Adicionar Item</h2>
+            <p class="section-desc">Adicione um produto a uma categoria existente</p>
+          </div>
+        </div>
+      </div>
 
-  <input type="text" id="buscaAdmin" placeholder="Buscar categoria ou item...">
+      <div class="section-body">
+        <div class="form-grid-2">
+          <div class="form-col">
+            <div class="field-group">
+              <label class="field-label" for="nomeItem">Nome do produto</label>
+              <input type="text" id="nomeItem" placeholder="Ex: Cimento CP II 50kg" maxlength="50" autocomplete="off">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="precoItem">Preço</label>
+              <div class="input-icon-wrap">
+                <span class="input-icon input-icon-text">R$</span>
+                <input type="text" id="precoItem" placeholder="0,00" maxlength="15" autocomplete="off" style="padding-left:42px">
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="categoriaSelect">Categoria</label>
+              <select id="categoriaSelect"></select>
+            </div>
+          </div>
+          <div class="form-col">
+            <div class="field-group">
+              <label class="field-label">Imagem do produto</label>
+              <div class="preview-box preview-box-sm">
+                <img id="previewItem" alt="Preview do item" style="display:none;">
+                <div class="preview-placeholder">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                  <span>Nenhuma imagem</span>
+                </div>
+              </div>
+              <label for="imagemItem" class="file-input-label">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Selecionar imagem
+              </label>
+              <input type="file" id="imagemItem" accept="image/*" style="display:none;">
+            </div>
+          </div>
+        </div>
 
-  <h2>Categorias cadastradas</h2>
-  <div id="listaCategorias"></div>
+        <div class="section-footer">
+          <button id="btnAddItem" class="btn-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Adicionar produto
+          </button>
+        </div>
+      </div>
+    </section>
 
-  <h2>Adicionar item à categoria</h2>
+  </div><!-- /admin-wrapper -->
 
-  <input type="text" id="nomeItem" placeholder="Nome do item" maxlength="50">
-  <input type="text" id="precoItem" placeholder="0,00" maxlength="15">
-  <input type="file" id="imagemItem">
-
-  <img
-    id="previewItem"
-    alt="Preview do item"
-    style="max-width: 220px; display: none; margin: 15px auto; border-radius: 12px;"
-  >
-
-  <select id="categoriaSelect"></select>
-
-  <button id="btnAddItem">Adicionar Item</button>
-
-  <div id="modalConfirm" class="modal">
+  <!-- Modal de confirmação -->
+  <div id="modalConfirm" class="modal" style="display:none;" aria-modal="true" role="dialog">
     <div class="modal-content">
-      <h3 id="modalTitulo">Confirmação</h3>
-      <p id="modalTexto"></p>
-
+      <h3 id="modalTitulo" class="modal-titulo">Confirmação</h3>
+      <p id="modalTexto" class="modal-texto"></p>
       <input
         type="password"
         id="modalSenha"
-        placeholder="Digite a senha"
+        placeholder="Senha de confirmação"
         style="display:none;"
+        autocomplete="current-password"
       >
-
       <div class="modal-botoes">
-        <button id="btnCancelarModal">Cancelar</button>
-        <button id="btnConfirmarModal">Confirmar</button>
+        <button id="btnCancelarModal" class="btn-outline">Cancelar</button>
+        <button id="btnConfirmarModal" class="btn-danger">Confirmar</button>
       </div>
     </div>
   </div>
@@ -92,6 +327,3 @@
   <script type="module" src="admin.js"></script>
 </body>
 </html>
-
-
-
