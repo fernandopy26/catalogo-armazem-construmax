@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Estatísticas — Admin</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg:        #0a0806;
+      --surface:   #17120c;
+      --surface2:  #1f1811;
+      --border:    rgba(212,160,69,.12);
+      --border2:   rgba(212,160,69,.24);
+      --accent:    #d4a045;
+      --accent-s:  #ebc478;
+      --text1:     #f5eee0;
+      --text2:     #c2b5a0;
+      --text3:     #7d6f5a;
+      --green:     #22c55e;
+      --red:       #ef4444;
+      --ease:      cubic-bezier(.22,1,.36,1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { color-scheme: only dark; }
+
+    body {
+      margin: 0;
+      font-family: "Inter", -apple-system, Arial, sans-serif;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text1);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* Grain de fundo */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(1200px 600px at 80% -5%, rgba(212,160,69,.10), transparent 55%),
+        url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='350'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.42' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.36  0 0 0 0 0.18  0 0 0 0.28 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E"),
+        linear-gradient(165deg, #110c08 0%, #0a0806 100%);
+      background-size: auto, 1000px auto, auto;
+      opacity: .55;
+      pointer-events: none;
+    }
+
+    /* ---- Layout ---- */
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 24px;
+      background: rgba(15,10,6,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar-titulo {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text1);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex: 1;
+    }
+
+    .topbar-titulo svg { color: var(--accent-s); }
+
+    .topbar-periodo {
+      font-size: 12.5px;
+      color: var(--text3);
+      font-weight: 400;
+      white-space: nowrap;
+    }
+
+    .btn-voltar {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text2);
+      text-decoration: none;
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      transition: color .2s, border-color .2s, background .2s;
+      white-space: nowrap;
+    }
+
+    .btn-voltar:hover {
+      color: var(--text1);
+      border-color: var(--border2);
+      background: rgba(212,160,69,.06);
+    }
+
+    .btn-voltar svg { width: 14px; height: 14px; }
+
+    .wrapper {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 28px 20px 60px;
+    }
+
+    /* ---- Loading / error ---- */
+
+    #estadoPagina {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 340px;
+      gap: 16px;
+      color: var(--text3);
+      font-size: 15px;
+      text-align: center;
+    }
+
+    .spinner {
+      width: 38px; height: 38px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---- Stat cards ---- */
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    @media (max-width: 900px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .cards-grid { grid-template-columns: 1fr 1fr; gap: 10px; } }
+
+    .stat-card {
+      background: linear-gradient(180deg, rgba(31,24,17,.94), rgba(15,10,6,.96));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 18px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 18px; right: 18px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border2), transparent);
+    }
+
+    .stat-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .stat-icon svg { width: 16px; height: 16px; }
+
+    .stat-valor {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text1);
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text3);
+      font-weight: 500;
+      margin-top: 5px;
+      letter-spacing: .02em;
+    }
+
+    .stat-sub {
+      font-size: 11.5px;
+      color: var(--text3);
+      margin-top: 4px;
+    }
+
+    /* ---- Seções de gráfico ---- */
+
+    .secao-titulo {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text3);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin: 28px 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .secao-titulo::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .card-grafico {
+      background: linear-gradient(180deg, rgba(31,24,17,.94), rgba(15,10,6,.96));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-grafico::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 24px; right: 24px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border2), transparent);
+    }
+
+    .card-grafico-titulo {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 18px;
+    }
+
+    .graficos-duplo {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 700px) { .graficos-duplo { grid-template-columns: 1fr; } }
+
+    .chart-container-sm { position: relative; height: 220px; }
+    .chart-container-md { position: relative; height: 280px; }
+    .chart-container-lg { position: relative; height: 240px; }
+
+    /* ---- Listas ---- */
+
+    .listas-duplo {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 700px) { .listas-duplo { grid-template-columns: 1fr; } }
+
+    .lista-rank {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .lista-rank li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13.5px;
+      color: var(--text2);
+    }
+
+    .rank-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: rgba(212,160,69,.12);
+      color: var(--accent-s);
+      font-size: 11.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .rank-nome { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .rank-barra-wrap {
+      width: 80px;
+      height: 5px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .rank-barra {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-s));
+      border-radius: 999px;
+    }
+
+    .rank-val {
+      min-width: 30px;
+      text-align: right;
+      font-weight: 600;
+      color: var(--text1);
+      font-size: 13px;
+    }
+
+    /* ---- Tabela ---- */
+
+    .tabela-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      color: var(--text3);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(212,160,69,.04); }
+
+    td {
+      padding: 10px 14px;
+      color: var(--text2);
+      white-space: nowrap;
+    }
+
+    td.data-col { color: var(--text1); font-weight: 500; font-variant-numeric: tabular-nums; }
+    td.num-col  { text-align: right; font-variant-numeric: tabular-nums; }
+    td.dest-col { color: var(--accent-s); font-weight: 600; }
+
+    /* ---- Vazio ---- */
+
+    .vazio-msg {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text3);
+      font-size: 14px;
+    }
+
+    .vazio-msg strong { display: block; font-size: 16px; color: var(--text2); margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="admin.html" class="btn-voltar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Admin
+    </a>
+    <div class="topbar-titulo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6"  y1="20" x2="6"  y2="14"/>
+      </svg>
+      Estatísticas
+    </div>
+    <span class="topbar-periodo" id="periodoLabel">Últimos 30 dias</span>
+  </div>
+
+  <div class="wrapper">
+
+    <!-- Estado: carregando / erro / vazio -->
+    <div id="estadoPagina">
+      <div class="spinner"></div>
+      <span>Carregando dados…</span>
+    </div>
+
+    <!-- Conteúdo principal (oculto até dados chegarem) -->
+    <div id="conteudo" style="display:none">
+
+      <!-- Cards de resumo -->
+      <div class="cards-grid" id="cardsGrid"></div>
+
+      <!-- Gráfico de linha: visitas por dia -->
+      <p class="secao-titulo">Visitas por dia</p>
+      <div class="card-grafico">
+        <div class="chart-container-md">
+          <canvas id="graficoLinha"></canvas>
+        </div>
+      </div>
+
+      <!-- Doughnuts -->
+      <p class="secao-titulo">Perfil de acesso</p>
+      <div class="graficos-duplo">
+        <div class="card-grafico">
+          <p class="card-grafico-titulo">Dispositivos</p>
+          <div class="chart-container-sm">
+            <canvas id="graficoDispositivos"></canvas>
+          </div>
+        </div>
+        <div class="card-grafico">
+          <p class="card-grafico-titulo">Origem do acesso</p>
+          <div class="chart-container-sm">
+            <canvas id="graficoOrigens"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bar: categorias -->
+      <p class="secao-titulo">Categorias mais vistas</p>
+      <div class="card-grafico">
+        <div class="chart-container-lg">
+          <canvas id="graficoCategorias"></canvas>
+        </div>
+      </div>
+
+      <!-- Listas: buscas + navegadores -->
+      <p class="secao-titulo">Detalhes</p>
+      <div class="listas-duplo">
+        <div class="card-grafico">
+          <p class="card-grafico-titulo">Buscas mais feitas</p>
+          <ul class="lista-rank" id="listaBuscas">
+            <li class="vazio-msg">Nenhuma busca registrada ainda.</li>
+          </ul>
+        </div>
+        <div class="card-grafico">
+          <p class="card-grafico-titulo">Navegadores</p>
+          <ul class="lista-rank" id="listaNavegadores">
+            <li class="vazio-msg">Sem dados.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Tabela de atividade por dia -->
+      <p class="secao-titulo">Atividade por dia</p>
+      <div class="card-grafico">
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th class="num-col">Visitas únicas</th>
+                <th class="num-col">Sessões</th>
+                <th class="num-col">Cliques WhatsApp</th>
+                <th class="num-col">Adicionados carrinho</th>
+                <th class="num-col">Buscas</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaCorpo"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /conteudo -->
+  </div>
+
+  <script type="module" src="estatisticas.js"></script>
+</body>
+</html>

@@ -5,6 +5,13 @@ import {
   doc,
   getDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  trackVisita,
+  trackCategoria,
+  trackWhatsApp,
+  trackCarrinho,
+  trackBusca
+} from "./analytics.js";
 
 /* =========================================================
    Estado global
@@ -74,6 +81,7 @@ function addToCart(item) {
   });
 
   saveCart();
+  trackCarrinho();
   mostrarToast(`${item.nome} adicionado`);
 }
 
@@ -586,7 +594,7 @@ function renderizarCatalogo(filtro = "") {
     `;
 
     container.appendChild(el);
-    observarParaRevelar(el);
+    observarParaRevelar(el, cat.nome);
   });
 
   ativarSetas();
@@ -616,6 +624,8 @@ function configurarObserverRevelar() {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add("revelada");
+          const nome = entry.target.dataset.catNome;
+          if (nome) trackCategoria(nome);
           revealObserver.unobserve(entry.target);
         }
       });
@@ -624,8 +634,13 @@ function configurarObserverRevelar() {
   );
 }
 
-function observarParaRevelar(elemento) {
-  if (!revealObserver) { elemento.classList.add("revelada"); return; }
+function observarParaRevelar(elemento, nomeCategoria = "") {
+  if (nomeCategoria) elemento.dataset.catNome = nomeCategoria;
+  if (!revealObserver) {
+    elemento.classList.add("revelada");
+    if (nomeCategoria) trackCategoria(nomeCategoria);
+    return;
+  }
   revealObserver.observe(elemento);
 }
 
@@ -726,28 +741,35 @@ function configurarCarrinho() {
     });
 }
 
-// Delegação para "Adicionar ao carrinho" nos cards (renderizados dinamicamente)
+// Delegação para ações nos cards (adicionados dinamicamente)
 container.addEventListener("click", (e) => {
-  const btn = e.target.closest(".btn-add-carrinho");
-  if (!btn) return;
+  // Adicionar ao carrinho
+  const btnCart = e.target.closest(".btn-add-carrinho");
+  if (btnCart) {
+    const cartKey = btnCart.dataset.cartKey;
+    const item    = itemsMap.get(cartKey);
+    if (!item) return;
+    addToCart(item);
+    btnCart.classList.add("adicionado");
+    setTimeout(() => btnCart.classList.remove("adicionado"), 600);
+    return;
+  }
 
-  const cartKey = btn.dataset.cartKey;
-  const item    = itemsMap.get(cartKey);
-  if (!item) return;
-
-  addToCart(item);
-
-  // Feedback visual no botão
-  btn.classList.add("adicionado");
-  setTimeout(() => btn.classList.remove("adicionado"), 600);
+  // Clique no WhatsApp do card
+  if (e.target.closest(".btn-whatsapp-card")) {
+    trackWhatsApp("item");
+  }
 });
 
 /* =========================================================
    Inputs de busca e filtros
    ========================================================= */
 
+let _buscaTimer = null;
 campoBusca.addEventListener("input", (e) => {
   renderizarCatalogo(e.target.value);
+  clearTimeout(_buscaTimer);
+  _buscaTimer = setTimeout(() => trackBusca(e.target.value), 1400);
 });
 
 document.getElementById("btnTodas").onclick = () => {
@@ -786,6 +808,13 @@ async function iniciar() {
   configurarVoltarTopo();
   configurarCarrinho();
   preencherAno();
+
+  // Rastrear WhatsApp da seção "Sobre" (disponível após DOM carregar)
+  document.getElementById("btnWhatsSobre")
+    ?.addEventListener("click", () => trackWhatsApp("loja"));
+
+  // Visita — fire-and-forget, não bloqueia o boot
+  trackVisita();
 
   try {
     await carregarConfigLoja();
