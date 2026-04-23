@@ -48,6 +48,9 @@
 
 html {
   scroll-behavior: smooth;
+  /* Sinaliza pros navegadores (Opera, Chromium) que a página já é dark.
+     Impede que Opera Mobile aplique force-dark e inverta gradientes. */
+  color-scheme: only dark;
 }
 
 body {
@@ -61,7 +64,13 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
+}
+
+/* Interativos: suprime delay de double-tap-to-zoom sem bloquear pinch-zoom */
+a, button, input, select, textarea {
+  touch-action: manipulation;
 }
 
 /* Fundo: madeira nogueira com iluminação quente vinda do canto + vinheta */
@@ -77,20 +86,20 @@ body::before {
     linear-gradient(165deg, #110c08 0%, #0a0806 45%, #080604 100%);
 }
 
-/* Camada de grão de madeira — gerada via SVG, sem imagem externa */
+/* Camada de grão de madeira — gerada via SVG, sem imagem externa.
+   Sem mix-blend-mode (era o que travava o zoom no mobile).
+   Cores já vêm com tom quente direto do filtro. */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -2;
   background-image:
-    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='400'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.42' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42  0 0 0 0 0.26  0 0 0 0 0.12  0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E"),
-    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.28  0 0 0 0 0.20  0 0 0 0 0.10  0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 1200px auto, 220px 220px;
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='400'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.42' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.36  0 0 0 0 0.18  0 0 0 0.28 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
+  background-size: 1200px auto;
   background-position: center;
-  opacity: 0.35;
+  opacity: 0.55;
   pointer-events: none;
-  mix-blend-mode: overlay;
 }
 
 
@@ -367,11 +376,10 @@ body::after {
   letter-spacing: -0.025em;
   overflow-wrap: break-word;
   word-break: break-word;
-  background: linear-gradient(180deg, #fbf4e3 0%, #d8c8aa 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 1px 20px rgba(212, 160, 69, 0.08);
+  /* Cor sólida creme quente — imune a force-dark do Opera e outros.
+     Visualmente quase idêntico ao gradient-text anterior. */
+  color: #fbf4e3;
+  text-shadow: 0 1px 24px rgba(212, 160, 69, 0.12);
 }
 
 .subtitulo-loja {
@@ -513,8 +521,7 @@ body::after {
 .mapa-overlay {
   position: absolute;
   inset: auto 12px 12px 12px;
-  background: rgba(15, 10, 6, 0.88);
-  backdrop-filter: blur(8px);
+  background: rgba(15, 10, 6, 0.92);
   color: var(--text-1);
   text-align: center;
   padding: 11px 14px;
@@ -523,6 +530,15 @@ body::after {
   font-size: 14px;
   border: 1px solid var(--border-strong);
   transition: background 0.2s var(--ease);
+}
+
+/* Blur só no desktop, onde o custo é aceitável */
+@media (min-width: 760px) and (hover: hover) {
+  .mapa-overlay {
+    background: rgba(15, 10, 6, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
 }
 
 .mapa-link:hover .mapa-overlay {
@@ -625,11 +641,12 @@ body::after {
 
 #campoBusca {
   width: 100%;
-  padding: 16px 18px 16px 48px;
+  padding: 15px 18px 15px 48px;
   border: none;
   outline: none;
   border-radius: var(--radius-md);
-  font-size: 15px;
+  /* 16px evita que iOS Safari dê zoom automático ao focar no input */
+  font-size: 16px;
   font-family: inherit;
   background: transparent;
   color: var(--text-1);
@@ -737,6 +754,11 @@ body::after {
   transform: translateY(24px);
   transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
   overflow: hidden;
+  /* Navegador pula renderização quando fora da viewport — ganho enorme no mobile.
+     auto 680px = usa 680px como placeholder inicial, mas memoriza o tamanho real
+     depois da 1ª renderização, evitando pulos de scroll. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 680px;
 }
 
 .categoria.revelada {
@@ -1251,6 +1273,74 @@ body::after {
     bottom: 18px;
     width: 42px;
     height: 42px;
+  }
+}
+
+/* =========================================================
+   Otimizações mobile — reduz custo de compositing
+   durante pinch-zoom e scroll em dispositivos touch.
+   ========================================================= */
+
+@media (max-width: 760px) {
+  /* Moldura de latão usa mask-composite — caro pro compositor, corta no mobile */
+  .hero-media::before {
+    display: none;
+  }
+
+  /* Cards sem textura SVG em telas pequenas — reduz passes de paint */
+  .item-card {
+    background: linear-gradient(180deg, rgba(42, 31, 19, 0.92), rgba(22, 16, 10, 0.96));
+  }
+
+  /* Splash mais leve — só gradient, sem SVG */
+  #splashScreen {
+    background:
+      radial-gradient(ellipse at 50% 40%, rgba(212, 160, 69, 0.12), transparent 55%),
+      radial-gradient(ellipse at center, #1a130c 0%, #0a0806 72%);
+  }
+
+  /* Sem-resultado simplificado */
+  .sem-resultado {
+    background: linear-gradient(180deg, rgba(31, 24, 17, 0.92), rgba(15, 10, 6, 0.94));
+  }
+
+  /* Grão do body menor e menos opaco — alivia recomposição durante zoom */
+  body::after {
+    background-size: 800px auto;
+    opacity: 0.42;
+  }
+
+  /* Hero sem SVG de madeira — as camadas de radial gradient já dão profundidade */
+  .hero::before {
+    background:
+      radial-gradient(700px 380px at 85% 15%, rgba(235, 196, 120, 0.16), transparent 65%),
+      radial-gradient(500px 280px at 10% 90%, rgba(167, 122, 45, 0.10), transparent 70%),
+      linear-gradient(180deg, rgba(26, 19, 12, 0.4), rgba(10, 8, 6, 0.92));
+  }
+}
+
+/* Dispositivos sem hover (touch) — desliga efeitos que só fazem sentido
+   com mouse e evitam que o navegador prepare camadas de hover. */
+@media (hover: none) {
+  .item-card::after,
+  .btn-compartilhar:hover,
+  .btn-whatsapp:hover,
+  .btn-whatsapp-topo:hover,
+  .btn-instagram:hover,
+  .item-card:hover,
+  .filtro-btn:hover,
+  .btn-seta:hover,
+  .filtro-seta:hover,
+  #btnVoltarTopo:hover,
+  .mapa-link:hover .mapa-overlay {
+    transform: none;
+  }
+
+  .item-card::after { display: none; }
+
+  .hero-media:hover #capaLojaImg,
+  .categoria:hover .categoria-capa img {
+    transform: none;
   }
 }
 
