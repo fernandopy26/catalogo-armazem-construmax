@@ -3,21 +3,28 @@ import {
   collection, getDocs, deleteDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 /* =========================================================
    Autenticação
    ========================================================= */
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
-  configurarModalLimpar();
-  await carregar();
-});
+// Mesmo portão de sessão do admin.js
+if (!sessionStorage.getItem("admin_ok")) {
+  signOut(auth).catch(() => {});
+  window.location.href = "login.html";
+} else {
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+    configurarModalLimpar();
+    await carregar();
+  });
+}
 
 /* =========================================================
    Paleta de cores dos gráficos

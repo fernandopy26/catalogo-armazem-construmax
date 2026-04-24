@@ -16,7 +16,13 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-console.log("admin.js carregado");
+// Portão de sessão — executado imediatamente, de forma síncrona.
+// Se não há flag de sessionStorage (nova aba, novo navegador, aba fechada),
+// derruba qualquer sessão Firebase residual e manda para o login.
+if (!sessionStorage.getItem("admin_ok")) {
+  signOut(auth).catch(() => {});
+  window.location.href = "login.html";
+}
 
 const API_KEY = "0d595582b34951b197134203135f6e32";
 
@@ -747,6 +753,7 @@ document.getElementById("buscaAdmin").addEventListener("input", (e) => {
 
 window.logout = async function () {
   try {
+    sessionStorage.removeItem("admin_ok");
     await signOut(auth);
     window.location.href = "login.html";
   } catch (erro) {
