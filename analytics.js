@@ -8,7 +8,12 @@ import {
    ========================================================= */
 
 function hoje() {
-  return new Date().toISOString().slice(0, 10); // "2026-04-23"
+  // Usa data LOCAL do navegador — toISOString() retorna UTC e no Brasil
+  // (UTC-3) qualquer acesso após 21h viraria o dia seguinte.
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mm}-${dd}`;
 }
 
 function detectarDispositivo() {

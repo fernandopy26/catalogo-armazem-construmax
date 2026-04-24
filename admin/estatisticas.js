@@ -68,7 +68,10 @@ async function carregarDados() {
 
   const limite = new Date();
   limite.setDate(limite.getDate() - 30);
-  const minData = limite.toISOString().slice(0, 10);
+  // Data local (não UTC) para evitar que o corte seja um dia errado no Brasil
+  const mm = String(limite.getMonth() + 1).padStart(2, "0");
+  const dd = String(limite.getDate()).padStart(2, "0");
+  const minData = `${limite.getFullYear()}-${mm}-${dd}`;
 
   return snap.docs
     .map(d => ({ id: d.id, ...d.data() }))
