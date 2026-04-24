@@ -241,7 +241,8 @@ document.getElementById("btnSalvar").addEventListener("click", async (e) => {
 
       await addDoc(collection(db, "categorias"), {
         nome,
-        imagem: url
+        imagem: url,
+        ordem: categoriasCache.length
       });
 
       mostrarMensagem("Categoria salva com sucesso!", "sucesso");
@@ -310,7 +311,11 @@ function renderizarCategorias(filtro = "") {
     return;
   }
 
-  categoriasFiltradas.forEach((categoria) => {
+  // Ordenar por campo 'ordem' antes de renderizar
+  categoriasFiltradas.sort((a, b) => (a.ordem ?? 9999) - (b.ordem ?? 9999));
+  const totalCats = categoriasFiltradas.length;
+
+  categoriasFiltradas.forEach((categoria, idx) => {
     const nomeCategoria = String(categoria.nome || "").toLowerCase();
     const categoriaCombina = nomeCategoria.includes(textoBusca);
 
@@ -319,6 +324,7 @@ function renderizarCategorias(filtro = "") {
     );
 
     const abrirAutomaticamente = textoBusca && temItemEncontrado && !categoriaCombina;
+    const semFiltro = !textoBusca;
 
     const div = document.createElement("div");
     div.className = "categoria-admin";
@@ -332,6 +338,8 @@ function renderizarCategorias(filtro = "") {
           <button class="btn-sm btn-primary" onclick="salvarEdicaoCategoria('${categoria.id}')">Salvar</button>
           <button class="btn-sm btn-outline" onclick="trocarImagemCategoria('${categoria.id}')">Imagem</button>
           <button class="btn-sm btn-outline" onclick="toggleItens('${categoria.id}', '${escapeAspas(textoBusca)}')">Itens</button>
+          ${semFiltro && idx > 0 ? `<button class="btn-sm btn-outline" onclick="moverCategoria('${categoria.id}','cima')" title="Mover para cima">↑</button>` : ""}
+          ${semFiltro && idx < totalCats - 1 ? `<button class="btn-sm btn-outline" onclick="moverCategoria('${categoria.id}','baixo')" title="Mover para baixo">↓</button>` : ""}
           <button class="btn-sm btn-danger" onclick="excluirCategoria('${categoria.id}')">Excluir</button>
         </div>
       </div>
@@ -362,14 +370,20 @@ function renderizarItensDaCategoria(categoriaId, textoBusca = "") {
     return;
   }
 
-  let html = `<p class="area-itens-titulo">${categoria.itens.length} ${categoria.itens.length === 1 ? "item" : "itens"}</p>`;
+  // Ordenar itens por 'ordem'
+  const itensOrdenados = [...categoria.itens].sort((a, b) => (a.ordem ?? 9999) - (b.ordem ?? 9999));
+  const totalItens = itensOrdenados.length;
+  const semFiltro  = !textoBusca;
 
-  categoria.itens.forEach((item) => {
-    const nomeItem = String(item.nome || "").toLowerCase();
+  let html = `<p class="area-itens-titulo">${totalItens} ${totalItens === 1 ? "item" : "itens"}</p>`;
+
+  itensOrdenados.forEach((item, idx) => {
+    const nomeItem  = String(item.nome || "").toLowerCase();
     const encontrou = textoBusca && nomeItem.includes(textoBusca);
+    const disponivel = item.disponivel !== false;
 
     html += `
-      <div class="item-admin ${encontrou ? "item-destaque" : ""}">
+      <div class="item-admin ${encontrou ? "item-destaque" : ""}${!disponivel ? " item-admin-indisponivel" : ""}">
         <img src="${item.imagem}" class="item-thumb" alt="${item.nome || ""}">
         <div class="item-fields">
           <input type="text" id="nome-${item.id}" value="${item.nome || ""}" placeholder="Nome do item" maxlength="50">
@@ -378,6 +392,12 @@ function renderizarItensDaCategoria(categoriaId, textoBusca = "") {
         <div class="botoes-item">
           <button class="btn-sm btn-primary" onclick="salvarEdicaoItem('${categoriaId}', '${item.id}')">Salvar</button>
           <button class="btn-sm btn-outline" onclick="trocarImagemItem('${categoriaId}', '${item.id}')">Imagem</button>
+          <button class="btn-sm btn-outline" onclick="duplicarItem('${categoriaId}', '${item.id}')">Duplicar</button>
+          ${semFiltro && idx > 0 ? `<button class="btn-sm btn-outline" onclick="moverItem('${categoriaId}','${item.id}','cima')" title="Mover para cima">↑</button>` : ""}
+          ${semFiltro && idx < totalItens - 1 ? `<button class="btn-sm btn-outline" onclick="moverItem('${categoriaId}','${item.id}','baixo')" title="Mover para baixo">↓</button>` : ""}
+          <button class="btn-sm ${disponivel ? "btn-outline" : "btn-danger"}" onclick="toggleDisponibilidade('${categoriaId}','${item.id}',${disponivel})">
+            ${disponivel ? "Disponível" : "Indisponível"}
+          </button>
           <button class="btn-sm btn-danger" onclick="excluirItem('${categoriaId}', '${item.id}')">Excluir</button>
         </div>
       </div>
@@ -718,10 +738,13 @@ document.getElementById("btnAddItem").addEventListener("click", async (e) => {
       const data = await response.json();
       const url = data.data.url;
 
+      const itensSnap = await getDocs(collection(db, "categorias", categoriaId, "itens"));
       await addDoc(collection(db, "categorias", categoriaId, "itens"), {
         nome,
         preco,
-        imagem: url
+        imagem: url,
+        disponivel: true,
+        ordem: itensSnap.size
       });
 
       mostrarMensagem("Item adicionado com sucesso!", "sucesso");
@@ -750,6 +773,77 @@ document.getElementById("btnAddItem").addEventListener("click", async (e) => {
 document.getElementById("buscaAdmin").addEventListener("input", (e) => {
   renderizarCategorias(e.target.value);
 });
+
+// ── Mover categoria ──────────────────────────────────────────
+window.moverCategoria = async function (categoriaId, direcao) {
+  const sorted = [...categoriasCache].sort((a, b) => (a.ordem ?? 9999) - (b.ordem ?? 9999));
+  const idx     = sorted.findIndex(c => c.id === categoriaId);
+  if (idx < 0) return;
+  const swapIdx = direcao === "cima" ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= sorted.length) return;
+
+  const catA = sorted[idx];
+  const catB = sorted[swapIdx];
+  await Promise.all([
+    updateDoc(doc(db, "categorias", catA.id), { ordem: swapIdx }),
+    updateDoc(doc(db, "categorias", catB.id), { ordem: idx })
+  ]);
+  await carregarCategorias();
+  await carregarSelect();
+};
+
+// ── Mover item ────────────────────────────────────────────────
+window.moverItem = async function (categoriaId, itemId, direcao) {
+  const categoria = categoriasCache.find(c => c.id === categoriaId);
+  if (!categoria) return;
+
+  const sorted = [...categoria.itens].sort((a, b) => (a.ordem ?? 9999) - (b.ordem ?? 9999));
+  const idx     = sorted.findIndex(i => i.id === itemId);
+  if (idx < 0) return;
+  const swapIdx = direcao === "cima" ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= sorted.length) return;
+
+  const itemA = sorted[idx];
+  const itemB = sorted[swapIdx];
+  await Promise.all([
+    updateDoc(doc(db, "categorias", categoriaId, "itens", itemA.id), { ordem: swapIdx }),
+    updateDoc(doc(db, "categorias", categoriaId, "itens", itemB.id), { ordem: idx })
+  ]);
+  await toggleItensRecarregar(categoriaId);
+};
+
+// ── Duplicar item ─────────────────────────────────────────────
+window.duplicarItem = async function (categoriaId, itemId) {
+  const categoria = categoriasCache.find(c => c.id === categoriaId);
+  if (!categoria) return;
+  const item = categoria.itens.find(i => i.id === itemId);
+  if (!item) return;
+
+  const maxOrdem = Math.max(...categoria.itens.map(i => i.ordem ?? 0), 0);
+  await addDoc(collection(db, "categorias", categoriaId, "itens"), {
+    nome:      `${item.nome} (cópia)`,
+    preco:     item.preco,
+    imagem:    item.imagem,
+    disponivel: item.disponivel !== false,
+    ordem:     maxOrdem + 1
+  });
+  mostrarMensagem("Item duplicado!", "sucesso");
+  await toggleItensRecarregar(categoriaId);
+};
+
+// ── Toggle disponibilidade ────────────────────────────────────
+window.toggleDisponibilidade = async function (categoriaId, itemId, disponivel) {
+  try {
+    await updateDoc(doc(db, "categorias", categoriaId, "itens", itemId), {
+      disponivel: !disponivel
+    });
+    mostrarMensagem(`Item marcado como ${!disponivel ? "disponível" : "indisponível"}!`, "sucesso");
+    await toggleItensRecarregar(categoriaId);
+  } catch (erro) {
+    console.error(erro);
+    mostrarMensagem("Erro ao atualizar disponibilidade!", "erro");
+  }
+};
 
 window.logout = async function () {
   try {

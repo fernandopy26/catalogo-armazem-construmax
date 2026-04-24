@@ -22,6 +22,8 @@ if (!sessionStorage.getItem("admin_ok")) {
       return;
     }
     configurarModalLimpar();
+    document.getElementById("btnExportar")
+      ?.addEventListener("click", () => exportarCSV(_docsCarregados));
     await carregar();
   });
 }
@@ -533,12 +535,46 @@ function configurarModalLimpar() {
 }
 
 /* =========================================================
+   Exportar CSV
+   ========================================================= */
+
+function exportarCSV(docs) {
+  const bom = "﻿";
+  const cab = "Data,Visitas Unicas,Sessoes,WhatsApp Itens,WhatsApp Loja,Carrinho,Buscas";
+  const linhas = docs.map(d => {
+    const ev = d.eventos || {};
+    return [
+      d.id,
+      d.visitas_unicas  || 0,
+      d.sessoes         || 0,
+      ev.whatsapp_item  || 0,
+      ev.whatsapp_loja  || 0,
+      ev.carrinho       || 0,
+      ev.buscas         || 0
+    ].join(",");
+  });
+  const csv  = bom + [cab, ...linhas].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement("a"), {
+    href: url,
+    download: `estatisticas-${new Date().toISOString().slice(0,10)}.csv`
+  });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* =========================================================
    Bootstrap
    ========================================================= */
 
+let _docsCarregados = [];
+
 async function carregar() {
   try {
-    const docs = await carregarDados();
+    const docs = _docsCarregados = await carregarDados();
 
     if (docs.length === 0) {
       mostrarEstado(`

@@ -1913,6 +1913,351 @@ body::after {
 }
 
 /* =========================================================
+   Botões sociais flutuantes (WhatsApp + Instagram)
+   ========================================================= */
+
+.floating-social {
+  position: fixed;
+  right: 20px;
+  bottom: 82px;
+  z-index: 2001;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.float-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgba(0,0,0,.40);
+  opacity: 0;
+  transform: scale(0.5) translateX(18px);
+  transition:
+    opacity .4s var(--ease),
+    transform .4s var(--ease),
+    box-shadow .25s var(--ease);
+  position: relative;
+}
+
+.float-btn svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.float-btn.visivel {
+  opacity: 1;
+  transform: scale(1) translateX(0);
+}
+
+.float-btn:hover {
+  transform: scale(1.10) translateX(0) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,.50);
+}
+
+/* Label tooltip */
+.float-label {
+  position: absolute;
+  right: 62px;
+  white-space: nowrap;
+  background: rgba(15,10,6,.92);
+  color: var(--text-1);
+  padding: 6px 11px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: "Inter", sans-serif;
+  opacity: 0;
+  transform: translateX(6px);
+  pointer-events: none;
+  transition: opacity .2s var(--ease), transform .2s var(--ease);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,.30);
+}
+
+.float-btn:hover .float-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* WhatsApp — verde com pulso */
+.float-whatsapp {
+  background: #22c55e;
+  color: white;
+}
+
+.float-whatsapp::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(34,197,94,.5);
+  animation: waPulso 2.8s ease-out infinite;
+}
+
+@keyframes waPulso {
+  0%   { transform: scale(1);    opacity: .7; }
+  65%  { transform: scale(1.55); opacity: 0;  }
+  100% { transform: scale(1.55); opacity: 0;  }
+}
+
+/* Instagram — degradê */
+.float-instagram {
+  background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  color: white;
+}
+
+@media (max-width: 600px) {
+  .floating-social { right: 14px; bottom: 76px; }
+  .float-btn { width: 48px; height: 48px; }
+  .float-btn svg { width: 22px; height: 22px; }
+}
+
+/* =========================================================
+   Botão compartilhar produto específico (nos cards)
+   ========================================================= */
+
+.btn-share-card {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: none;
+  background: rgba(10,8,6,.65);
+  color: var(--text-3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .2s, color .2s, background .2s;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.item-card:hover .btn-share-card { opacity: 1; }
+.btn-share-card:hover { color: var(--text-1); background: rgba(25,18,10,.9); }
+.btn-share-card svg { width: 13px; height: 13px; }
+
+/* =========================================================
+   Item indisponível
+   ========================================================= */
+
+.item-card-indisponivel {
+  opacity: 0.52;
+  filter: grayscale(0.65);
+}
+
+.item-card-indisponivel .btn-whatsapp-card,
+.item-card-indisponivel .btn-add-carrinho {
+  pointer-events: none;
+  opacity: .45;
+}
+
+.badge-indisponivel {
+  display: block;
+  margin: 4px 4px 10px;
+  padding: 6px 10px;
+  background: rgba(239,68,68,.12);
+  color: #ef4444;
+  border: 1px solid rgba(239,68,68,.25);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: .03em;
+}
+
+/* =========================================================
+   Carrinho — estado de sucesso após envio
+   ========================================================= */
+
+.carrinho-sucesso {
+  background: rgba(34,197,94,.08);
+  border: 1px solid rgba(34,197,94,.22);
+  border-radius: 12px;
+  padding: 18px 14px 14px;
+  text-align: center;
+  animation: sucessoEntrada .4s var(--ease);
+}
+
+@keyframes sucessoEntrada {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+
+.sucesso-icone {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: rgba(34,197,94,.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  color: var(--green);
+}
+
+.sucesso-icone svg { width: 20px; height: 20px; }
+
+.sucesso-titulo {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.sucesso-sub {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.sucesso-acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.sucesso-acoes button { flex: 1; }
+
+.btn-manter {
+  padding: 10px;
+  border-radius: 9px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+
+.btn-manter:hover { background: var(--accent-glow); color: var(--text-1); }
+
+.btn-novo-pedido {
+  padding: 10px;
+  border-radius: 9px;
+  border: none;
+  background: rgba(34,197,94,.15);
+  color: #6ee7a5;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid rgba(34,197,94,.25);
+  transition: background .2s, color .2s;
+}
+
+.btn-novo-pedido:hover { background: var(--green); color: white; }
+
+/* =========================================================
+   Histórico de pedidos (painel)
+   ========================================================= */
+
+.historico-vazio {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--text-3);
+}
+
+.historico-vazio svg { width: 46px; height: 46px; opacity: .30; }
+.historico-vazio strong { display: block; font-size: 15px; color: var(--text-2); margin-bottom: 4px; }
+.historico-vazio span { font-size: 13.5px; line-height: 1.5; }
+
+.historico-item {
+  padding: 14px;
+  background: rgba(42,31,19,.45);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color .2s;
+}
+
+.historico-item:hover { border-color: var(--border-strong); }
+
+.historico-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.historico-data {
+  font-size: 12px;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.historico-total {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-soft);
+}
+
+.historico-resumo {
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.45;
+}
+
+.historico-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag-pagamento {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-3);
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+
+.btn-repedir {
+  align-self: flex-end;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(34,197,94,.30);
+  background: rgba(34,197,94,.10);
+  color: #6ee7a5;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s;
+}
+
+.btn-repedir:hover {
+  background: var(--green);
+  color: white;
+  border-color: var(--green);
+}
+
+/* =========================================================
    Mensagens (reutilizadas pelo admin)
    ========================================================= */
 
