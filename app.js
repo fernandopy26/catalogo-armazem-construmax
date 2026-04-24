@@ -223,33 +223,33 @@ function gerarMensagemPedido() {
   });
 
   const linhas = carrinho.map(entry => {
-    const subtotal = (() => {
-      const n = Number(
-        String(entry.precoRaw)
-          .replace("R$", "")
-          .replace(/\s/g, "")
-          .replace(/\./g, "")
-          .replace(",", ".")
-      );
-      if (isNaN(n)) return "";
-      return ` (subtotal: ${(n * entry.quantidade).toLocaleString("pt-BR", {
-        style: "currency", currency: "BRL"
-      })})`;
-    })();
+    const precoUnitario = Number(
+      String(entry.precoRaw)
+        .replace("R$", "")
+        .replace(/\s/g, "")
+        .replace(/\./g, "")
+        .replace(",", ".")
+    );
 
-    return `• ${entry.quantidade}x ${entry.nome} — ${entry.precoFormatado}${entry.quantidade > 1 ? subtotal : ""}`;
+    const subtotalTxt = (!isNaN(precoUnitario) && entry.quantidade > 1)
+      ? ` — subtotal: ${(precoUnitario * entry.quantidade).toLocaleString("pt-BR", {
+          style: "currency", currency: "BRL"
+        })}`
+      : "";
+
+    return `  - ${entry.quantidade}x ${entry.nome} (${entry.precoFormatado} cada)${subtotalTxt}`;
   });
 
   return [
-    "Olá! Gostaria de fazer um pedido:",
+    "Ola! Vim pelo catalogo e gostaria de fazer um pedido.",
     "",
-    "*📦 Itens:*",
+    "*Itens do pedido:*",
     ...linhas,
     "",
-    `💰 *Total estimado: ${total}*`,
-    `💳 *Pagamento: ${pagamento}*`,
+    `*Total estimado:* ${total}`,
+    `*Pagamento:* ${pagamento}`,
     "",
-    "Aguardo confirmação!"
+    "Aguardo confirmacao, obrigado!"
   ].join("\n");
 }
 
@@ -508,7 +508,7 @@ function criarCardItem(item, textoBusca = "") {
 
 function gerarLinkWhatsApp(item) {
   if (!whatsappLoja) return "#";
-  const mensagem = `Olá! Tenho interesse no item ${item.nome}, no valor de ${formatarPreco(item.preco)}.`;
+  const mensagem = `Ola! Vim pelo catalogo e tenho interesse no produto *${item.nome}* (${formatarPreco(item.preco)}). Pode me passar mais informacoes?`;
   return `https://wa.me/55${whatsappLoja}?text=${encodeURIComponent(mensagem)}`;
 }
 

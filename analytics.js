@@ -1,6 +1,6 @@
 import { db } from "./config/firebase.js";
 import {
-  doc, setDoc, increment, serverTimestamp
+  doc, setDoc, updateDoc, increment, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /* =========================================================
@@ -66,13 +66,39 @@ function sanitizarChave(str) {
    Escrita atômica no Firestore (fire-and-forget)
    ========================================================= */
 
+// updateDoc trata "dispositivos.mobile" como caminho aninhado (correto).
+// setDoc com merge:true trata como nome literal do campo — por isso só
+// campos planos (visitas_unicas, sessoes) funcionavam antes da correção.
 async function escrever(campos) {
   try {
     const ref = doc(db, "analytics", hoje());
-    await setDoc(ref, { ...campos, atualizado: serverTimestamp() }, { merge: true });
+    try {
+      await updateDoc(ref, { ...campos, atualizado: serverTimestamp() });
+    } catch {
+      // Documento não existe ainda (primeiro acesso do dia) — cria com setDoc.
+      // setDoc não aceita dot-notation como caminho, então convertemos
+      // os campos para objetos aninhados reais.
+      await setDoc(ref, construirInicial(campos));
+    }
   } catch {
     // Silencioso — analytics nunca deve quebrar o catálogo
   }
+}
+
+// Converte { "dispositivos.mobile": increment(1) }
+// para    { dispositivos: { mobile: 1 }, atualizado: serverTimestamp() }
+function construirInicial(campos) {
+  const obj = { atualizado: serverTimestamp() };
+  for (const caminho of Object.keys(campos)) {
+    const partes = caminho.split(".");
+    let no = obj;
+    for (let i = 0; i < partes.length - 1; i++) {
+      no[partes[i]] = no[partes[i]] || {};
+      no = no[partes[i]];
+    }
+    no[partes.at(-1)] = 1; // todos os campos de analytics começam em 1
+  }
+  return obj;
 }
 
 /* =========================================================
