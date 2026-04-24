@@ -1,6 +1,6 @@
 import { db, auth } from "../config/firebase.js";
 import {
-  collection, getDocs
+  collection, getDocs, deleteDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
   onAuthStateChanged
@@ -15,6 +15,7 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = "login.html";
     return;
   }
+  configurarModalLimpar();
   await carregar();
 });
 
@@ -415,6 +416,113 @@ function deepMerge(a, b) {
       : v;
   }
   return result;
+}
+
+/* =========================================================
+   Modal — Limpar estatísticas
+   ========================================================= */
+
+const SENHA_CONFIRMACAO = "1234";
+
+function abrirModalLimpar() {
+  const modal = document.getElementById("modalLimpar");
+  document.getElementById("senhaLimpar").value = "";
+  document.getElementById("erroSenhaLimpar").textContent = "";
+  modal.classList.add("aberto");
+  modal.setAttribute("aria-hidden", "false");
+  setTimeout(() => document.getElementById("senhaLimpar").focus(), 80);
+}
+
+function fecharModalLimpar() {
+  const modal = document.getElementById("modalLimpar");
+  modal.classList.remove("aberto");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+async function executarLimpeza() {
+  const btn = document.getElementById("btnConfirmarLimpar");
+  btn.disabled = true;
+  btn.textContent = "Apagando…";
+
+  try {
+    const snap = await getDocs(collection(db, "analytics"));
+    await Promise.all(snap.docs.map(d => deleteDoc(doc(db, "analytics", d.id))));
+
+    fecharModalLimpar();
+
+    // Mostra estado vazio sem recarregar a página
+    mostrarEstado(`
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.35">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+      </svg>
+      <strong style="color:#c2b5a0">Dados apagados com sucesso</strong>
+      <span style="max-width:300px;line-height:1.6;color:#7d6f5a">
+        Novos registros aparecerão aqui conforme os visitantes acessarem o catálogo.
+      </span>
+    `);
+
+    document.getElementById("periodoLabel").textContent = "Últimos 30 dias";
+
+  } catch (err) {
+    console.error("Erro ao limpar estatísticas:", err);
+    document.getElementById("erroSenhaLimpar").textContent = "Erro ao apagar os dados. Tente novamente.";
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+      </svg>
+      Apagar tudo
+    `;
+  }
+}
+
+function configurarModalLimpar() {
+  document.getElementById("btnLimparDados")
+    ?.addEventListener("click", abrirModalLimpar);
+
+  document.getElementById("btnCancelarLimpar")
+    ?.addEventListener("click", fecharModalLimpar);
+
+  // Fechar clicando fora do card
+  document.getElementById("modalLimpar")
+    ?.addEventListener("click", (e) => {
+      if (e.target === e.currentTarget) fecharModalLimpar();
+    });
+
+  // Fechar com Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") fecharModalLimpar();
+  });
+
+  document.getElementById("btnConfirmarLimpar")
+    ?.addEventListener("click", () => {
+      const senha = document.getElementById("senhaLimpar").value;
+      const erroEl = document.getElementById("erroSenhaLimpar");
+
+      if (!senha) {
+        erroEl.textContent = "Digite a senha para continuar.";
+        return;
+      }
+
+      if (senha !== SENHA_CONFIRMACAO) {
+        erroEl.textContent = "Senha incorreta.";
+        document.getElementById("senhaLimpar").value = "";
+        document.getElementById("senhaLimpar").focus();
+        return;
+      }
+
+      erroEl.textContent = "";
+      executarLimpeza();
+    });
+
+  // Enter no campo de senha confirma
+  document.getElementById("senhaLimpar")
+    ?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("btnConfirmarLimpar").click();
+    });
 }
 
 /* =========================================================

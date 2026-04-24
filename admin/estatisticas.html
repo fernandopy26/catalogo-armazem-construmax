@@ -382,6 +382,183 @@
     }
 
     .vazio-msg strong { display: block; font-size: 16px; color: var(--text2); margin-bottom: 6px; }
+
+    /* ---- Botão limpar ---- */
+
+    .btn-limpar {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 13px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid rgba(239,68,68,.30);
+      background: transparent;
+      color: rgba(239,68,68,.80);
+      transition: background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease);
+      white-space: nowrap;
+    }
+
+    .btn-limpar:hover {
+      background: rgba(239,68,68,.12);
+      color: #ef4444;
+      border-color: rgba(239,68,68,.55);
+    }
+
+    .btn-limpar svg { width: 13px; height: 13px; }
+
+    /* ---- Modal de confirmação ---- */
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6,4,2,.78);
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s var(--ease);
+    }
+
+    .modal-overlay.aberto {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      background:
+        linear-gradient(180deg, rgba(31,24,17,.99), rgba(15,10,6,1)),
+        url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.014 0.40' numOctaves='3' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.28  0 0 0 0 0.14  0 0 0 0.50 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
+      background-size: auto, 500px auto;
+      border: 1px solid rgba(239,68,68,.30);
+      border-radius: 20px;
+      padding: 28px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.55);
+      position: relative;
+      overflow: hidden;
+      transform: translateY(12px);
+      transition: transform .3s var(--ease);
+    }
+
+    .modal-overlay.aberto .modal-box { transform: translateY(0); }
+
+    .modal-box::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 24px; right: 24px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(239,68,68,.35), transparent);
+    }
+
+    .modal-icone {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: rgba(239,68,68,.12);
+      border: 1px solid rgba(239,68,68,.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      color: #ef4444;
+    }
+
+    .modal-icone svg { width: 20px; height: 20px; }
+
+    .modal-box h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text1);
+    }
+
+    .modal-box p {
+      margin: 0 0 20px;
+      font-size: 13.5px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    .modal-box input[type="password"] {
+      width: 100%;
+      padding: 11px 14px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text1);
+      background: rgba(31,24,17,.80);
+      border: 1px solid rgba(212,160,69,.20);
+      border-radius: 9px;
+      outline: none;
+      margin-bottom: 18px;
+      box-sizing: border-box;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .modal-box input[type="password"]:focus {
+      border-color: rgba(239,68,68,.55);
+      box-shadow: 0 0 0 3px rgba(239,68,68,.12);
+    }
+
+    .modal-box input::placeholder { color: var(--text3); }
+
+    .modal-erro {
+      font-size: 12.5px;
+      color: #ef4444;
+      margin: -12px 0 14px;
+      min-height: 18px;
+    }
+
+    .modal-botoes {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn-cancelar {
+      padding: 10px 18px;
+      border-radius: 9px;
+      border: 1px solid rgba(212,160,69,.20);
+      background: transparent;
+      color: var(--text2);
+      font-size: 13.5px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+
+    .btn-cancelar:hover { background: rgba(212,160,69,.08); color: var(--text1); }
+
+    .btn-confirmar-limpar {
+      padding: 10px 18px;
+      border-radius: 9px;
+      border: 1px solid rgba(239,68,68,.40);
+      background: rgba(239,68,68,.12);
+      color: #ef4444;
+      font-size: 13.5px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: background .2s, border-color .2s;
+    }
+
+    .btn-confirmar-limpar:hover {
+      background: rgba(239,68,68,.22);
+      border-color: rgba(239,68,68,.65);
+    }
+
+    .btn-confirmar-limpar:disabled { opacity: .5; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -402,6 +579,15 @@
       Estatísticas
     </div>
     <span class="topbar-periodo" id="periodoLabel">Últimos 30 dias</span>
+    <button id="btnLimparDados" class="btn-limpar" title="Apagar todos os dados de estatísticas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M10 11v6M14 11v6"/>
+        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+      </svg>
+      Limpar dados
+    </button>
   </div>
 
   <div class="wrapper">
@@ -489,6 +675,34 @@
       </div>
 
     </div><!-- /conteudo -->
+  </div>
+
+  <!-- Modal: limpar estatísticas -->
+  <div id="modalLimpar" class="modal-overlay" aria-modal="true" role="dialog" aria-hidden="true">
+    <div class="modal-box">
+      <div class="modal-icone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+      </div>
+      <h3>Limpar todos os dados</h3>
+      <p>Esta ação apaga permanentemente todos os registros de visitas, cliques, buscas e demais estatísticas. Não pode ser desfeita.</p>
+      <input type="password" id="senhaLimpar" placeholder="Senha de confirmação" autocomplete="off">
+      <p class="modal-erro" id="erroSenhaLimpar"></p>
+      <div class="modal-botoes">
+        <button id="btnCancelarLimpar" class="btn-cancelar">Cancelar</button>
+        <button id="btnConfirmarLimpar" class="btn-confirmar-limpar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14" aria-hidden="true">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          </svg>
+          Apagar tudo
+        </button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="estatisticas.js"></script>
