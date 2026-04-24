@@ -1,4 +1,5 @@
 import { db, auth } from "../config/firebase.js";
+import { iniciarChangelog } from "./changelog.js";
 
 import {
   collection,
@@ -38,6 +39,7 @@ onAuthStateChanged(auth, async (user) => {
   await carregarCategorias();
   await carregarSelect();
   await carregarConfiguracaoLoja();
+  iniciarChangelog();
 
   mostrarPreview("imagem", "previewCategoria");
   mostrarPreview("imagemItem", "previewItem");
