@@ -1,5 +1,5 @@
 import { db, auth } from "../config/firebase.js";
-import { iniciarChangelog } from "./changelog.js";
+import { iniciarChangelog } from "./changelog.js?v=2.4";
 import {
   camposCapa,
   camposImagem,

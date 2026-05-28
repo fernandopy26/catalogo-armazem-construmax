@@ -1,4 +1,4 @@
-const APP_VERSION = "2026-05-28-balanced-wood-bg";
+const APP_VERSION = "2026-05-28-admin-cache-fix";
 const CACHE_PREFIX = "catalogo";
 
 const STATIC_CACHE = `${CACHE_PREFIX}-static-${APP_VERSION}`;
@@ -83,6 +83,11 @@ self.addEventListener("fetch", (event) => {
 
   if (CDN_STATIC_HOSTS.has(url.hostname) && ["script", "worker"].includes(request.destination)) {
     event.respondWith(staleWhileRevalidate(request, STATIC_CACHE));
+    return;
+  }
+
+  if (url.origin === self.location.origin && url.pathname.startsWith("/admin/")) {
+    event.respondWith(networkFirst(request, RUNTIME_CACHE, MAX_RUNTIME_ENTRIES));
     return;
   }
 
