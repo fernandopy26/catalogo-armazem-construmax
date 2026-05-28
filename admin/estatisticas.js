@@ -1,9 +1,11 @@
 import { db, auth } from "../config/firebase.js";
 import {
-  collection, getDocs, deleteDoc, doc
+  collection, deleteDoc, doc, documentId, getDocs, orderBy, query, where
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
+  EmailAuthProvider,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -26,6 +28,35 @@ if (!sessionStorage.getItem("admin_ok")) {
       ?.addEventListener("click", () => exportarCSV(_docsCarregados));
     await carregar();
   });
+}
+
+function mensagemErroReautenticacao(erro) {
+  const code = erro?.code || "";
+
+  if (code.includes("wrong-password") || code.includes("invalid-credential")) {
+    return "Senha do login incorreta.";
+  }
+
+  if (code.includes("too-many-requests")) {
+    return "Muitas tentativas. Aguarde um pouco e tente novamente.";
+  }
+
+  if (code.includes("network-request-failed")) {
+    return "Sem conexão para confirmar a senha.";
+  }
+
+  return "Não foi possível confirmar sua senha. Faça login novamente.";
+}
+
+async function reautenticarAdmin(senha) {
+  const user = auth.currentUser;
+
+  if (!user || !user.email) {
+    throw new Error("admin-sem-sessao");
+  }
+
+  const credencial = EmailAuthProvider.credential(user.email, senha);
+  await reauthenticateWithCredential(user, credencial);
 }
 
 /* =========================================================
@@ -74,26 +105,30 @@ const NAVEGADOR_NOME = {
    ========================================================= */
 
 async function carregarDados() {
-  const snap = await getDocs(collection(db, "analytics"));
-
+  const hoje = new Date();
   const limite = new Date();
-  limite.setDate(limite.getDate() - 30);
-  // Data local (não UTC) para evitar que o corte seja um dia errado no Brasil
-  const mm = String(limite.getMonth() + 1).padStart(2, "0");
-  const dd = String(limite.getDate()).padStart(2, "0");
-  const minData = `${limite.getFullYear()}-${mm}-${dd}`;
+  limite.setDate(hoje.getDate() - 29);
+
+  const minData = dataLocalISO(limite);
+  const maxData = dataLocalISO(hoje);
+  const q = query(
+    collection(db, "analytics"),
+    where(documentId(), ">=", minData),
+    where(documentId(), "<=", maxData),
+    orderBy(documentId(), "asc")
+  );
+  const snap = await getDocs(q);
 
   return snap.docs
     .map(d => ({ id: d.id, ...d.data() }))
-    .filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d.id) && d.id >= minData)
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d.id));
 }
 
 function agregar(docs) {
   const a = {
     visitas_unicas: 0, sessoes: 0,
     dispositivos: {}, navegadores: {}, origens: {},
-    eventos: { whatsapp_item: 0, whatsapp_loja: 0, carrinho: 0, buscas: 0 },
+    eventos: { whatsapp_item: 0, whatsapp_loja: 0, whatsapp_pedido: 0, carrinho: 0, buscas: 0 },
     categorias: {}, buscas: {}
   };
 
@@ -109,6 +144,12 @@ function agregar(docs) {
   }
 
   return a;
+}
+
+function totalWhatsApp(eventos = {}) {
+  return Object.entries(eventos)
+    .filter(([k]) => k.startsWith("whatsapp_"))
+    .reduce((total, [, v]) => total + (Number(v) || 0), 0);
 }
 
 function juntarObjeto(alvo, fonte) {
@@ -152,8 +193,8 @@ function renderCards(agg) {
     },
     {
       label: "Cliques WhatsApp",
-      valor: fmt((agg.eventos.whatsapp_item || 0) + (agg.eventos.whatsapp_loja || 0)),
-      sub: `${agg.eventos.whatsapp_item || 0} em produtos · ${agg.eventos.whatsapp_loja || 0} na loja`,
+      valor: fmt(totalWhatsApp(agg.eventos)),
+      sub: `${agg.eventos.whatsapp_item || 0} produtos · ${agg.eventos.whatsapp_loja || 0} loja · ${agg.eventos.whatsapp_pedido || 0} pedidos`,
       cor: COR.green,
       svg: `<path d="M20.52 3.48A12 12 0 0 0 3.48 20.52L2 22l1.58-1.44A12 12 0 1 0 20.52 3.48z" fill="currentColor"/>`,
       fill: true,
@@ -327,7 +368,7 @@ function renderLista(idEl, dadosObj, nomesMap = {}) {
   el.innerHTML = top.map(([k, v], i) => `
     <li>
       <span class="rank-num">${i + 1}</span>
-      <span class="rank-nome">${nomesMap[k] || k}</span>
+      <span class="rank-nome">${escaparHTML(nomesMap[k] || k)}</span>
       <span class="rank-barra-wrap">
         <span class="rank-barra" style="width:${Math.round((v / max) * 100)}%"></span>
       </span>
@@ -349,7 +390,7 @@ function renderTabela(docs) {
 
   tbody.innerHTML = linhas.map(d => {
     const ev      = d.eventos || {};
-    const wa      = (ev.whatsapp_item || 0) + (ev.whatsapp_loja || 0);
+    const wa      = totalWhatsApp(ev);
     const cart    = ev.carrinho || 0;
     const buscas  = ev.buscas   || 0;
 
@@ -374,11 +415,26 @@ function fmt(n) {
   return Number(n || 0).toLocaleString("pt-BR");
 }
 
+function dataLocalISO(data) {
+  const mm = String(data.getMonth() + 1).padStart(2, "0");
+  const dd = String(data.getDate()).padStart(2, "0");
+  return `${data.getFullYear()}-${mm}-${dd}`;
+}
+
 function formatarData(iso) {
   // "2026-04-23" → "23 abr"
   const [, m, d] = iso.split("-");
   const meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
   return `${parseInt(d)} ${meses[parseInt(m) - 1]}`;
+}
+
+function escaparHTML(texto) {
+  return String(texto ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 /* =========================================================
@@ -417,6 +473,11 @@ function criarGrafico(id, tipo, data, opcoesExtra = {}) {
   });
 }
 
+function destruirGraficos() {
+  Object.values(charts).forEach((chart) => chart.destroy());
+  Object.keys(charts).forEach((key) => delete charts[key]);
+}
+
 function deepMerge(a, b) {
   const result = { ...a };
   for (const [k, v] of Object.entries(b)) {
@@ -430,8 +491,6 @@ function deepMerge(a, b) {
 /* =========================================================
    Modal — Limpar estatísticas
    ========================================================= */
-
-const SENHA_CONFIRMACAO = "1234";
 
 function abrirModalLimpar() {
   const modal = document.getElementById("modalLimpar");
@@ -456,6 +515,8 @@ async function executarLimpeza() {
   try {
     const snap = await getDocs(collection(db, "analytics"));
     await Promise.all(snap.docs.map(d => deleteDoc(doc(db, "analytics", d.id))));
+    _docsCarregados = [];
+    destruirGraficos();
 
     fecharModalLimpar();
 
@@ -507,24 +568,34 @@ function configurarModalLimpar() {
   });
 
   document.getElementById("btnConfirmarLimpar")
-    ?.addEventListener("click", () => {
+    ?.addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
       const senha = document.getElementById("senhaLimpar").value;
       const erroEl = document.getElementById("erroSenhaLimpar");
 
       if (!senha) {
-        erroEl.textContent = "Digite a senha para continuar.";
-        return;
-      }
-
-      if (senha !== SENHA_CONFIRMACAO) {
-        erroEl.textContent = "Senha incorreta.";
-        document.getElementById("senhaLimpar").value = "";
+        erroEl.textContent = "Digite a senha do seu login para continuar.";
         document.getElementById("senhaLimpar").focus();
         return;
       }
 
+      const textoOriginal = btn.innerHTML;
+      btn.disabled = true;
+      btn.textContent = "Confirmando...";
+
+      try {
+        await reautenticarAdmin(senha);
+      } catch (erro) {
+        erroEl.textContent = mensagemErroReautenticacao(erro);
+        document.getElementById("senhaLimpar").value = "";
+        document.getElementById("senhaLimpar").focus();
+        btn.disabled = false;
+        btn.innerHTML = textoOriginal;
+        return;
+      }
+
       erroEl.textContent = "";
-      executarLimpeza();
+      await executarLimpeza();
     });
 
   // Enter no campo de senha confirma
@@ -540,7 +611,7 @@ function configurarModalLimpar() {
 
 function exportarCSV(docs) {
   const bom = "﻿";
-  const cab = "Data,Visitas Unicas,Sessoes,WhatsApp Itens,WhatsApp Loja,Carrinho,Buscas";
+  const cab = "Data,Visitas Unicas,Sessoes,WhatsApp Itens,WhatsApp Loja,WhatsApp Pedidos,WhatsApp Total,Carrinho,Buscas";
   const linhas = docs.map(d => {
     const ev = d.eventos || {};
     return [
@@ -549,6 +620,8 @@ function exportarCSV(docs) {
       d.sessoes         || 0,
       ev.whatsapp_item  || 0,
       ev.whatsapp_loja  || 0,
+      ev.whatsapp_pedido || 0,
+      totalWhatsApp(ev),
       ev.carrinho       || 0,
       ev.buscas         || 0
     ].join(",");

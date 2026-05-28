@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0806">
+  <meta name="color-scheme" content="dark">
+  <title>Catálogo offline</title>
+  <style>
+    :root {
+      color-scheme: only dark;
+      --bg: #0a0806;
+      --surface: #1f1811;
+      --border: rgba(212, 160, 69, .22);
+      --text: #f5eee0;
+      --muted: #c2b5a0;
+      --accent: #d4a045;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 480px at 80% 0%, rgba(212, 160, 69, .14), transparent 62%),
+        linear-gradient(165deg, #110c08, var(--bg));
+    }
+
+    main {
+      width: min(420px, 100%);
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(31, 24, 17, .92);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .38);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 24px;
+      line-height: 1.16;
+    }
+
+    p {
+      margin: 0 0 22px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    button {
+      width: 100%;
+      min-height: 46px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #1a1404;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Sem conexão agora</h1>
+    <p>O catálogo salvo no aparelho continua disponível quando possível. Tente novamente quando a internet voltar.</p>
+    <button type="button" onclick="location.reload()">Tentar novamente</button>
+  </main>
+</body>
+</html>

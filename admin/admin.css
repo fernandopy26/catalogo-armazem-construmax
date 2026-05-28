@@ -590,10 +590,22 @@ button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   overflow: hidden;
-  transition: border-color .2s;
+  transition: border-color .2s, opacity .2s var(--ease), transform .2s var(--ease);
 }
 
 .categoria-admin:hover { border-color: var(--border-2); }
+
+.categoria-admin.drag-over,
+.item-admin.drag-over {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(212,160,69,.18);
+}
+
+.categoria-admin.arrastando,
+.item-admin.arrastando {
+  opacity: .54;
+  transform: scale(.995);
+}
 
 .cat-card-header {
   display: flex;
@@ -601,6 +613,33 @@ button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
   gap: 14px;
   padding: 14px 16px;
   flex-wrap: wrap;
+}
+
+.drag-handle {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  border: 1px solid var(--border-2);
+  background: rgba(212,160,69,.08);
+  color: var(--text-3);
+  cursor: grab;
+}
+
+.drag-handle:hover {
+  color: var(--accent-s);
+  background: var(--accent-g);
+  border-color: var(--accent);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle svg {
+  width: 18px;
+  height: 18px;
 }
 
 .cat-thumb {
@@ -664,10 +703,14 @@ button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   flex-wrap: wrap;
-  transition: border-color .2s;
+  transition: border-color .2s, opacity .2s var(--ease), transform .2s var(--ease);
 }
 
 .item-admin:hover { border-color: var(--border-2); }
+
+.item-admin-indisponivel {
+  opacity: .74;
+}
 
 .item-thumb {
   width: 56px;
@@ -693,6 +736,17 @@ button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
   margin: 0;
   font-size: 13.5px;
   background: var(--surface-3);
+}
+
+.item-fields textarea {
+  flex: 1 1 100%;
+  min-height: 64px;
+  margin: 0;
+  padding: 9px 11px;
+  font-size: 13px;
+  line-height: 1.45;
+  background: var(--surface-3);
+  resize: vertical;
 }
 
 .botoes-item {

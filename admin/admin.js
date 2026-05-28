@@ -1,5 +1,11 @@
 import { db, auth } from "../config/firebase.js";
 import { iniciarChangelog } from "./changelog.js";
+import {
+  camposCapa,
+  camposImagem,
+  resumoOtimizacao,
+  uploadImagem
+} from "./upload-imagem.js";
 
 import {
   collection,
@@ -9,11 +15,14 @@ import {
   doc,
   updateDoc,
   setDoc,
-  getDoc
+  getDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 import {
+  EmailAuthProvider,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -25,10 +34,89 @@ if (!sessionStorage.getItem("admin_ok")) {
   window.location.href = "login.html";
 }
 
-const API_KEY = "0d595582b34951b197134203135f6e32";
-
 let categoriaAbertaId = null;
 let categoriasCache = [];
+let categoriasCacheCarregado = false;
+let dragOrdenacao = null;
+let dragListenersConfigurados = false;
+
+const CATALOGO_CACHE_COLLECTION = "catalogo";
+const CATALOGO_CACHE_DOC = "publico";
+const CATALOGO_CACHE_VERSION = 1;
+
+function ordemDe(registro) {
+  return Number.isFinite(Number(registro?.ordem)) ? Number(registro.ordem) : 9999;
+}
+
+function ordenarPorOrdem(a, b) {
+  return ordemDe(a) - ordemDe(b);
+}
+
+function montarCatalogoPublico() {
+  const categorias = [...categoriasCache]
+    .sort(ordenarPorOrdem)
+    .map((categoria) => {
+      const itens = Array.isArray(categoria.itens) ? categoria.itens : [];
+
+      return {
+        ...categoria,
+        itens: [...itens]
+          .sort(ordenarPorOrdem)
+          .map((item) => ({
+            ...item,
+            cartKey: item.cartKey || `${categoria.id}_${item.id}`
+          }))
+      };
+    });
+
+  return {
+    versao: CATALOGO_CACHE_VERSION,
+    atualizadoEm: serverTimestamp(),
+    totalCategorias: categorias.length,
+    totalItens: categorias.reduce((total, categoria) => total + categoria.itens.length, 0),
+    categorias
+  };
+}
+
+async function publicarCatalogoPublico() {
+  try {
+    await setDoc(
+      doc(db, CATALOGO_CACHE_COLLECTION, CATALOGO_CACHE_DOC),
+      montarCatalogoPublico()
+    );
+  } catch (erro) {
+    console.error("Erro ao atualizar cache público do catálogo:", erro);
+
+    // Evita que o site público use um cache antigo caso a publicação falhe
+    // por limite de tamanho do documento ou regra de escrita.
+    try {
+      await deleteDoc(doc(db, CATALOGO_CACHE_COLLECTION, CATALOGO_CACHE_DOC));
+    } catch {}
+
+    mostrarMensagem(
+      "Alteração salva, mas o cache rápido não atualizou. O catálogo usará leitura direta.",
+      "aviso"
+    );
+  }
+}
+
+async function garantirCatalogoPublico() {
+  try {
+    const cacheSnap = await getDoc(doc(db, CATALOGO_CACHE_COLLECTION, CATALOGO_CACHE_DOC));
+    const cache = cacheSnap.exists() ? cacheSnap.data() : null;
+    if (!cache || cache.versao !== CATALOGO_CACHE_VERSION) {
+      await publicarCatalogoPublico();
+    }
+  } catch (erro) {
+    console.info("Cache público indisponível; o catálogo público usará fallback.", erro);
+  }
+}
+
+async function atualizarListasEPublicarCatalogo() {
+  await carregarCategorias();
+  await carregarSelect();
+  await publicarCatalogoPublico();
+}
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -38,12 +126,14 @@ onAuthStateChanged(auth, async (user) => {
 
   await carregarCategorias();
   await carregarSelect();
+  await garantirCatalogoPublico();
   await carregarConfiguracaoLoja();
   iniciarChangelog();
 
   mostrarPreview("imagem", "previewCategoria");
   mostrarPreview("imagemItem", "previewItem");
   mostrarPreview("capaLoja", "previewCapaLoja");
+  configurarDragOrdenacao();
 
   aplicarMascaraPrecoNoCampo(document.getElementById("precoItem"));
 });
@@ -62,6 +152,24 @@ function travarBotao(botao, textoCarregando = "Salvando...") {
 
 function normalizarTexto(texto) {
   return String(texto).trim().toLowerCase();
+}
+
+function escaparHTML(texto) {
+  return String(texto ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function escaparAttr(texto) {
+  return String(texto ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 async function carregarConfiguracaoLoja() {
@@ -160,6 +268,35 @@ function mostrarMensagem(texto, tipo = "sucesso") {
   }, 3000);
 }
 
+function mensagemErroReautenticacao(erro) {
+  const code = erro?.code || "";
+
+  if (code.includes("wrong-password") || code.includes("invalid-credential")) {
+    return "Senha do login incorreta.";
+  }
+
+  if (code.includes("too-many-requests")) {
+    return "Muitas tentativas. Aguarde um pouco e tente novamente.";
+  }
+
+  if (code.includes("network-request-failed")) {
+    return "Sem conexão para confirmar a senha.";
+  }
+
+  return "Não foi possível confirmar sua senha. Faça login novamente.";
+}
+
+async function reautenticarAdmin(senha) {
+  const user = auth.currentUser;
+
+  if (!user || !user.email) {
+    throw new Error("admin-sem-sessao");
+  }
+
+  const credencial = EmailAuthProvider.credential(user.email, senha);
+  await reauthenticateWithCredential(user, credencial);
+}
+
 let acaoConfirmada = null;
 
 function abrirModal({ titulo, texto, precisaSenha = false, onConfirm }) {
@@ -181,13 +318,35 @@ function fecharModal() {
 document.getElementById("btnCancelarModal").onclick = fecharModal;
 
 document.getElementById("btnConfirmarModal").onclick = async () => {
-  const senha = document.getElementById("modalSenha").value;
+  const botao = document.getElementById("btnConfirmarModal");
+  const campoSenha = document.getElementById("modalSenha");
+  const senha = campoSenha.value;
+  const precisaReautenticar = campoSenha.style.display === "block";
 
-  if (document.getElementById("modalSenha").style.display === "block") {
-    if (senha !== "1234") {
-      mostrarMensagem("Senha incorreta!", "erro");
+  if (precisaReautenticar) {
+    if (!senha) {
+      mostrarMensagem("Digite a senha do seu login.", "aviso");
+      campoSenha.focus();
       return;
     }
+
+    const textoOriginal = botao.textContent;
+    botao.disabled = true;
+    botao.textContent = "Confirmando...";
+
+    try {
+      await reautenticarAdmin(senha);
+    } catch (erro) {
+      mostrarMensagem(mensagemErroReautenticacao(erro), "erro");
+      campoSenha.value = "";
+      campoSenha.focus();
+      botao.disabled = false;
+      botao.textContent = textoOriginal;
+      return;
+    }
+
+    botao.disabled = false;
+    botao.textContent = textoOriginal;
   }
 
   fecharModal();
@@ -227,51 +386,35 @@ document.getElementById("btnSalvar").addEventListener("click", async (e) => {
     return;
   }
 
-  const reader = new FileReader();
+  try {
+    botao.textContent = "Otimizando imagem...";
+    const upload = await uploadImagem(file, "categoria");
 
-  reader.onloadend = async function () {
-    try {
-      const base64 = reader.result.split(",")[1];
+    await addDoc(collection(db, "categorias"), {
+      nome,
+      ...camposImagem(upload),
+      ordem: categoriasCache.length
+    });
 
-      const response = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY}`, {
-        method: "POST",
-        body: new URLSearchParams({ image: base64 })
-      });
+    mostrarMensagem(`Categoria salva! ${resumoOtimizacao(upload)}`, "sucesso");
+    document.getElementById("nome").value = "";
+    document.getElementById("imagem").value = "";
 
-      const data = await response.json();
-      const url = data.data.url;
+    limparPreview("previewCategoria");
 
-      await addDoc(collection(db, "categorias"), {
-        nome,
-        imagem: url,
-        ordem: categoriasCache.length
-      });
-
-      mostrarMensagem("Categoria salva com sucesso!", "sucesso");
-      document.getElementById("nome").value = "";
-      document.getElementById("imagem").value = "";
-
-      limparPreview("previewCategoria");
-
-      await carregarCategorias();
-      await carregarSelect();
-      destravar();
-    } catch (erro) {
-      console.error("Erro ao salvar categoria:", erro);
-      mostrarMensagem("Erro ao salvar categoria!", "erro");
-      destravar();
-    }
-  };
-
-  reader.readAsDataURL(file);
+    await atualizarListasEPublicarCatalogo();
+    destravar();
+  } catch (erro) {
+    console.error("Erro ao salvar categoria:", erro);
+    mostrarMensagem(erro.message || "Erro ao salvar categoria!", "erro");
+    destravar();
+  }
 });
 
 // LISTAR CATEGORIAS
 async function carregarCategorias() {
   const querySnapshot = await getDocs(collection(db, "categorias"));
-  categoriasCache = [];
-
-  for (const docSnap of querySnapshot.docs) {
+  categoriasCache = await Promise.all(querySnapshot.docs.map(async (docSnap) => {
     const data = docSnap.data();
 
     const itensSnapshot = await getDocs(collection(db, "categorias", docSnap.id, "itens"));
@@ -280,12 +423,14 @@ async function carregarCategorias() {
       ...itemDoc.data()
     }));
 
-    categoriasCache.push({
+    return {
       id: docSnap.id,
       ...data,
       itens
-    });
-  }
+    };
+  }));
+
+  categoriasCacheCarregado = true;
 
   renderizarCategorias();
 }
@@ -301,9 +446,11 @@ function renderizarCategorias(filtro = "") {
 
     const categoriaCombina = nomeCategoria.includes(textoBusca);
 
-    const itemCombina = categoria.itens.some((item) =>
-      String(item.nome || "").toLowerCase().includes(textoBusca)
-    );
+    const itemCombina = categoria.itens.some((item) => {
+      const nomeItem = String(item.nome || "").toLowerCase();
+      const descricaoItem = String(item.descricao || "").toLowerCase();
+      return nomeItem.includes(textoBusca) || descricaoItem.includes(textoBusca);
+    });
 
     return !textoBusca || categoriaCombina || itemCombina;
   });
@@ -315,14 +462,14 @@ function renderizarCategorias(filtro = "") {
 
   // Ordenar por campo 'ordem' antes de renderizar
   categoriasFiltradas.sort((a, b) => (a.ordem ?? 9999) - (b.ordem ?? 9999));
-  const totalCats = categoriasFiltradas.length;
 
-  categoriasFiltradas.forEach((categoria, idx) => {
+  categoriasFiltradas.forEach((categoria) => {
     const nomeCategoria = String(categoria.nome || "").toLowerCase();
     const categoriaCombina = nomeCategoria.includes(textoBusca);
 
     const temItemEncontrado = categoria.itens.some((item) =>
-      String(item.nome || "").toLowerCase().includes(textoBusca)
+      String(item.nome || "").toLowerCase().includes(textoBusca) ||
+      String(item.descricao || "").toLowerCase().includes(textoBusca)
     );
 
     const abrirAutomaticamente = textoBusca && temItemEncontrado && !categoriaCombina;
@@ -330,18 +477,26 @@ function renderizarCategorias(filtro = "") {
 
     const div = document.createElement("div");
     div.className = "categoria-admin";
+    div.dataset.categoriaId = categoria.id;
     div.innerHTML = `
       <div class="cat-card-header">
-        <img src="${categoria.imagem}" class="cat-thumb" alt="${categoria.nome || ""}">
+        ${semFiltro ? `
+          <button class="drag-handle drag-categoria" type="button" draggable="true" data-drag-tipo="categoria" data-categoria-id="${escaparAttr(categoria.id)}" title="Arrastar categoria" aria-label="Arrastar categoria">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+              <circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/>
+              <circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/>
+              <circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>
+            </svg>
+          </button>
+        ` : ""}
+        <img src="${escaparAttr(categoria.imagem)}" class="cat-thumb" alt="${escaparAttr(categoria.nome || "")}">
         <div class="cat-card-body">
-          <input type="text" id="categoria-nome-${categoria.id}" value="${categoria.nome || ""}" placeholder="Nome da categoria" maxlength="40">
+          <input type="text" id="categoria-nome-${categoria.id}" value="${escaparAttr(categoria.nome || "")}" placeholder="Nome da categoria" maxlength="40">
         </div>
         <div class="botoes-categoria">
           <button class="btn-sm btn-primary" onclick="salvarEdicaoCategoria('${categoria.id}')">Salvar</button>
           <button class="btn-sm btn-outline" onclick="trocarImagemCategoria('${categoria.id}')">Imagem</button>
           <button class="btn-sm btn-outline" onclick="toggleItens('${categoria.id}', '${escapeAspas(textoBusca)}')">Itens</button>
-          ${semFiltro && idx > 0 ? `<button class="btn-sm btn-outline" onclick="moverCategoria('${categoria.id}','cima')" title="Mover para cima">↑</button>` : ""}
-          ${semFiltro && idx < totalCats - 1 ? `<button class="btn-sm btn-outline" onclick="moverCategoria('${categoria.id}','baixo')" title="Mover para baixo">↓</button>` : ""}
           <button class="btn-sm btn-danger" onclick="excluirCategoria('${categoria.id}')">Excluir</button>
         </div>
       </div>
@@ -379,24 +534,33 @@ function renderizarItensDaCategoria(categoriaId, textoBusca = "") {
 
   let html = `<p class="area-itens-titulo">${totalItens} ${totalItens === 1 ? "item" : "itens"}</p>`;
 
-  itensOrdenados.forEach((item, idx) => {
+  itensOrdenados.forEach((item) => {
     const nomeItem  = String(item.nome || "").toLowerCase();
-    const encontrou = textoBusca && nomeItem.includes(textoBusca);
+    const descricaoItem = String(item.descricao || "").toLowerCase();
+    const encontrou = textoBusca && (nomeItem.includes(textoBusca) || descricaoItem.includes(textoBusca));
     const disponivel = item.disponivel !== false;
 
     html += `
-      <div class="item-admin ${encontrou ? "item-destaque" : ""}${!disponivel ? " item-admin-indisponivel" : ""}">
-        <img src="${item.imagem}" class="item-thumb" alt="${item.nome || ""}">
+      <div class="item-admin ${encontrou ? "item-destaque" : ""}${!disponivel ? " item-admin-indisponivel" : ""}" data-categoria-id="${escaparAttr(categoriaId)}" data-item-id="${escaparAttr(item.id)}">
+        ${semFiltro ? `
+          <button class="drag-handle drag-item" type="button" draggable="true" data-drag-tipo="item" data-categoria-id="${escaparAttr(categoriaId)}" data-item-id="${escaparAttr(item.id)}" title="Arrastar produto" aria-label="Arrastar produto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+              <circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/>
+              <circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/>
+              <circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>
+            </svg>
+          </button>
+        ` : ""}
+        <img src="${escaparAttr(item.imagem)}" class="item-thumb" alt="${escaparAttr(item.nome || "")}">
         <div class="item-fields">
-          <input type="text" id="nome-${item.id}" value="${item.nome || ""}" placeholder="Nome do item" maxlength="50">
-          <input type="text" id="preco-${item.id}" value="${item.preco || ""}" placeholder="0,00" maxlength="15">
+          <input type="text" id="nome-${item.id}" value="${escaparAttr(item.nome || "")}" placeholder="Nome do item" maxlength="50">
+          <input type="text" id="preco-${item.id}" value="${escaparAttr(item.preco || "")}" placeholder="0,00" maxlength="15">
+          <textarea id="descricao-${item.id}" placeholder="Descrição do produto" maxlength="300" rows="2">${escaparHTML(item.descricao || "")}</textarea>
         </div>
         <div class="botoes-item">
           <button class="btn-sm btn-primary" onclick="salvarEdicaoItem('${categoriaId}', '${item.id}')">Salvar</button>
           <button class="btn-sm btn-outline" onclick="trocarImagemItem('${categoriaId}', '${item.id}')">Imagem</button>
           <button class="btn-sm btn-outline" onclick="duplicarItem('${categoriaId}', '${item.id}')">Duplicar</button>
-          ${semFiltro && idx > 0 ? `<button class="btn-sm btn-outline" onclick="moverItem('${categoriaId}','${item.id}','cima')" title="Mover para cima">↑</button>` : ""}
-          ${semFiltro && idx < totalItens - 1 ? `<button class="btn-sm btn-outline" onclick="moverItem('${categoriaId}','${item.id}','baixo')" title="Mover para baixo">↓</button>` : ""}
           <button class="btn-sm ${disponivel ? "btn-outline" : "btn-danger"}" onclick="toggleDisponibilidade('${categoriaId}','${item.id}',${disponivel})">
             ${disponivel ? "Disponível" : "Indisponível"}
           </button>
@@ -445,8 +609,7 @@ window.salvarEdicaoCategoria = async function (categoriaId) {
     });
 
     mostrarMensagem("Categoria atualizada!", "sucesso");
-    await carregarCategorias();
-    await carregarSelect();
+    await atualizarListasEPublicarCatalogo();
   } catch (erro) {
     console.error("Erro ao salvar categoria:", erro);
     mostrarMensagem("Erro ao salvar categoria!", "erro");
@@ -467,33 +630,19 @@ window.trocarImagemCategoria = async function (categoriaId) {
         return;
       }
 
-      const reader = new FileReader();
+      try {
+        mostrarMensagem("Otimizando e enviando imagem...", "aviso");
+        const upload = await uploadImagem(file, "categoria");
 
-      reader.onloadend = async function () {
-        try {
-          const base64 = reader.result.split(",")[1];
+        await updateDoc(doc(db, "categorias", categoriaId), camposImagem(upload));
 
-          const response = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY}`, {
-            method: "POST",
-            body: new URLSearchParams({ image: base64 })
-          });
-
-          const data = await response.json();
-          const url = data.data.url;
-
-          await updateDoc(doc(db, "categorias", categoriaId), {
-            imagem: url
-          });
-
-          mostrarMensagem("Imagem da categoria atualizada!", "sucesso");
-          await carregarCategorias();
-        } catch (erro) {
-          console.error("Erro ao trocar imagem da categoria:", erro);
-          mostrarMensagem("Erro ao trocar imagem da categoria!", "erro");
-        }
-      };
-
-      reader.readAsDataURL(file);
+        mostrarMensagem(`Imagem atualizada! ${resumoOtimizacao(upload)}`, "sucesso");
+        await carregarCategorias();
+        await publicarCatalogoPublico();
+      } catch (erro) {
+        console.error("Erro ao trocar imagem da categoria:", erro);
+        mostrarMensagem(erro.message || "Erro ao trocar imagem da categoria!", "erro");
+      }
     };
 
     inputFile.click();
@@ -527,6 +676,8 @@ window.excluirCategoria = async function (id) {
         if (categoriaAbertaId === id) {
           categoriaAbertaId = null;
         }
+
+        await publicarCatalogoPublico();
       } catch (erro) {
         console.error("Erro ao excluir categoria:", erro);
         mostrarMensagem("Erro ao excluir categoria!", "erro");
@@ -578,6 +729,7 @@ window.excluirItem = async function (categoriaId, itemId) {
         await deleteDoc(doc(db, "categorias", categoriaId, "itens", itemId));
         mostrarMensagem("Item excluído com sucesso!", "sucesso");
         await toggleItensRecarregar(categoriaId);
+        await publicarCatalogoPublico();
       } catch (erro) {
         console.error("Erro ao excluir item:", erro);
         mostrarMensagem("Erro ao excluir item!", "erro");
@@ -595,6 +747,7 @@ async function toggleItensRecarregar(categoriaId) {
 window.salvarEdicaoItem = async function (categoriaId, itemId) {
   const novoNome = document.getElementById(`nome-${itemId}`).value;
   const novoPreco = document.getElementById(`preco-${itemId}`).value;
+  const novaDescricao = document.getElementById(`descricao-${itemId}`)?.value.trim() || "";
 
   if (!novoNome || !novoPreco) {
     mostrarMensagem("Preencha nome e preço.", "aviso");
@@ -618,11 +771,13 @@ window.salvarEdicaoItem = async function (categoriaId, itemId) {
 
     await updateDoc(doc(db, "categorias", categoriaId, "itens", itemId), {
       nome: novoNome,
-      preco: novoPreco
+      preco: novoPreco,
+      descricao: novaDescricao
     });
 
     mostrarMensagem("Item atualizado!", "sucesso");
     await toggleItensRecarregar(categoriaId);
+    await publicarCatalogoPublico();
   } catch (erro) {
     console.error("Erro ao salvar edição do item:", erro);
     mostrarMensagem("Erro ao salvar edição do item!", "erro");
@@ -643,33 +798,19 @@ window.trocarImagemItem = async function (categoriaId, itemId) {
         return;
       }
 
-      const reader = new FileReader();
+      try {
+        mostrarMensagem("Otimizando e enviando imagem...", "aviso");
+        const upload = await uploadImagem(file, "item");
 
-      reader.onloadend = async function () {
-        try {
-          const base64 = reader.result.split(",")[1];
+        await updateDoc(doc(db, "categorias", categoriaId, "itens", itemId), camposImagem(upload));
 
-          const response = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY}`, {
-            method: "POST",
-            body: new URLSearchParams({ image: base64 })
-          });
-
-          const data = await response.json();
-          const url = data.data.url;
-
-          await updateDoc(doc(db, "categorias", categoriaId, "itens", itemId), {
-            imagem: url
-          });
-
-          mostrarMensagem("Imagem atualizada!", "sucesso");
-          await toggleItensRecarregar(categoriaId);
-        } catch (erro) {
-          console.error("Erro ao trocar imagem do item:", erro);
-          mostrarMensagem("Erro ao trocar imagem do item!", "erro");
-        }
-      };
-
-      reader.readAsDataURL(file);
+        mostrarMensagem(`Imagem atualizada! ${resumoOtimizacao(upload)}`, "sucesso");
+        await toggleItensRecarregar(categoriaId);
+        await publicarCatalogoPublico();
+      } catch (erro) {
+        console.error("Erro ao trocar imagem do item:", erro);
+        mostrarMensagem(erro.message || "Erro ao trocar imagem do item!", "erro");
+      }
     };
 
     inputFile.click();
@@ -684,12 +825,17 @@ async function carregarSelect() {
   const select = document.getElementById("categoriaSelect");
   select.innerHTML = "";
 
-  const querySnapshot = await getDocs(collection(db, "categorias"));
+  const categorias = categoriasCacheCarregado
+    ? [...categoriasCache].sort(ordenarPorOrdem)
+    : (await getDocs(collection(db, "categorias"))).docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      })).sort(ordenarPorOrdem);
 
-  querySnapshot.forEach((docSnap) => {
+  categorias.forEach((categoria) => {
     const option = document.createElement("option");
-    option.value = docSnap.id;
-    option.textContent = docSnap.data().nome;
+    option.value = categoria.id;
+    option.textContent = categoria.nome;
     select.appendChild(option);
   });
 }
@@ -703,6 +849,7 @@ document.getElementById("btnAddItem").addEventListener("click", async (e) => {
 
   const nome = document.getElementById("nomeItem").value.trim();
   const preco = document.getElementById("precoItem").value;
+  const descricao = document.getElementById("descricaoItem").value.trim();
   const file = document.getElementById("imagemItem").files[0];
   const categoriaId = document.getElementById("categoriaSelect").value;
 
@@ -726,55 +873,181 @@ document.getElementById("btnAddItem").addEventListener("click", async (e) => {
     return;
   }
 
-  const reader = new FileReader();
+  try {
+    botao.textContent = "Otimizando imagem...";
+    const upload = await uploadImagem(file, "item");
 
-  reader.onloadend = async function () {
-    try {
-      const base64 = reader.result.split(",")[1];
+    const itensSnap = await getDocs(collection(db, "categorias", categoriaId, "itens"));
+    await addDoc(collection(db, "categorias", categoriaId, "itens"), {
+      nome,
+      preco,
+      descricao,
+      ...camposImagem(upload),
+      disponivel: true,
+      ordem: itensSnap.size
+    });
 
-      const response = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY}`, {
-        method: "POST",
-        body: new URLSearchParams({ image: base64 })
-      });
+    mostrarMensagem(`Item adicionado! ${resumoOtimizacao(upload)}`, "sucesso");
 
-      const data = await response.json();
-      const url = data.data.url;
+    document.getElementById("nomeItem").value = "";
+    document.getElementById("precoItem").value = "";
+    document.getElementById("descricaoItem").value = "";
+    document.getElementById("imagemItem").value = "";
 
-      const itensSnap = await getDocs(collection(db, "categorias", categoriaId, "itens"));
-      await addDoc(collection(db, "categorias", categoriaId, "itens"), {
-        nome,
-        preco,
-        imagem: url,
-        disponivel: true,
-        ordem: itensSnap.size
-      });
+    limparPreview("previewItem");
 
-      mostrarMensagem("Item adicionado com sucesso!", "sucesso");
-
-      document.getElementById("nomeItem").value = "";
-      document.getElementById("precoItem").value = "";
-      document.getElementById("imagemItem").value = "";
-
-      limparPreview("previewItem");
-
-      if (categoriaAbertaId === categoriaId) {
-        await toggleItensRecarregar(categoriaId);
-      }
-
-      destravar();
-    } catch (erro) {
-      console.error("Erro ao adicionar item:", erro);
-      mostrarMensagem("Erro ao adicionar item!", "erro");
-      destravar();
+    if (categoriaAbertaId === categoriaId) {
+      await toggleItensRecarregar(categoriaId);
+    } else {
+      await carregarCategorias();
     }
-  };
 
-  reader.readAsDataURL(file);
+    await publicarCatalogoPublico();
+    destravar();
+  } catch (erro) {
+    console.error("Erro ao adicionar item:", erro);
+    mostrarMensagem(erro.message || "Erro ao adicionar item!", "erro");
+    destravar();
+  }
 });
 
 document.getElementById("buscaAdmin").addEventListener("input", (e) => {
   renderizarCategorias(e.target.value);
 });
+
+function moverRegistro(lista, origemId, destinoId) {
+  const novaLista = [...lista];
+  const origemIndex = novaLista.findIndex((item) => item.id === origemId);
+  const destinoIndex = novaLista.findIndex((item) => item.id === destinoId);
+
+  if (origemIndex < 0 || destinoIndex < 0 || origemIndex === destinoIndex) {
+    return null;
+  }
+
+  const [movido] = novaLista.splice(origemIndex, 1);
+  novaLista.splice(destinoIndex, 0, movido);
+  return novaLista;
+}
+
+function limparMarcadoresDrag() {
+  document.querySelectorAll(".arrastando, .drag-over").forEach((el) => {
+    el.classList.remove("arrastando", "drag-over");
+  });
+}
+
+function configurarDragOrdenacao() {
+  if (dragListenersConfigurados) return;
+
+  const lista = document.getElementById("listaCategorias");
+  if (!lista) return;
+
+  dragListenersConfigurados = true;
+
+  lista.addEventListener("dragstart", (e) => {
+    const handle = e.target.closest(".drag-handle");
+    if (!handle) return;
+
+    dragOrdenacao = {
+      tipo: handle.dataset.dragTipo,
+      categoriaId: handle.dataset.categoriaId || "",
+      itemId: handle.dataset.itemId || ""
+    };
+
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", JSON.stringify(dragOrdenacao));
+    handle.closest(".categoria-admin, .item-admin")?.classList.add("arrastando");
+  });
+
+  lista.addEventListener("dragover", (e) => {
+    if (!dragOrdenacao) return;
+
+    const alvo = dragOrdenacao.tipo === "categoria"
+      ? e.target.closest(".categoria-admin")
+      : e.target.closest(".item-admin");
+
+    if (!alvo) return;
+    if (dragOrdenacao.tipo === "item" && alvo.dataset.categoriaId !== dragOrdenacao.categoriaId) return;
+
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+
+    document.querySelectorAll(".drag-over").forEach((el) => {
+      if (el !== alvo) el.classList.remove("drag-over");
+    });
+    alvo.classList.add("drag-over");
+  });
+
+  lista.addEventListener("dragleave", (e) => {
+    const alvo = e.target.closest(".categoria-admin, .item-admin");
+    if (alvo && !alvo.contains(e.relatedTarget)) {
+      alvo.classList.remove("drag-over");
+    }
+  });
+
+  lista.addEventListener("drop", async (e) => {
+    if (!dragOrdenacao) return;
+    e.preventDefault();
+
+    try {
+      if (dragOrdenacao.tipo === "categoria") {
+        const alvo = e.target.closest(".categoria-admin");
+        await reordenarCategoriasPorDrag(dragOrdenacao.categoriaId, alvo?.dataset.categoriaId);
+      }
+
+      if (dragOrdenacao.tipo === "item") {
+        const alvo = e.target.closest(".item-admin");
+        if (alvo?.dataset.categoriaId === dragOrdenacao.categoriaId) {
+          await reordenarItensPorDrag(dragOrdenacao.categoriaId, dragOrdenacao.itemId, alvo.dataset.itemId);
+        }
+      }
+    } catch (erro) {
+      console.error("Erro ao reordenar:", erro);
+      mostrarMensagem("Erro ao reordenar. Tente novamente.", "erro");
+    } finally {
+      dragOrdenacao = null;
+      limparMarcadoresDrag();
+    }
+  });
+
+  lista.addEventListener("dragend", () => {
+    dragOrdenacao = null;
+    limparMarcadoresDrag();
+  });
+}
+
+async function reordenarCategoriasPorDrag(origemId, destinoId) {
+  if (!origemId || !destinoId || origemId === destinoId) return;
+
+  const ordenadas = [...categoriasCache].sort(ordenarPorOrdem);
+  const novaOrdem = moverRegistro(ordenadas, origemId, destinoId);
+  if (!novaOrdem) return;
+
+  await Promise.all(novaOrdem.map((categoria, index) =>
+    updateDoc(doc(db, "categorias", categoria.id), { ordem: index })
+  ));
+
+  mostrarMensagem("Categorias reordenadas!", "sucesso");
+  await atualizarListasEPublicarCatalogo();
+}
+
+async function reordenarItensPorDrag(categoriaId, origemId, destinoId) {
+  if (!categoriaId || !origemId || !destinoId || origemId === destinoId) return;
+
+  const categoria = categoriasCache.find((cat) => cat.id === categoriaId);
+  if (!categoria) return;
+
+  const ordenados = [...categoria.itens].sort(ordenarPorOrdem);
+  const novaOrdem = moverRegistro(ordenados, origemId, destinoId);
+  if (!novaOrdem) return;
+
+  await Promise.all(novaOrdem.map((item, index) =>
+    updateDoc(doc(db, "categorias", categoriaId, "itens", item.id), { ordem: index })
+  ));
+
+  mostrarMensagem("Produtos reordenados!", "sucesso");
+  await toggleItensRecarregar(categoriaId);
+  await publicarCatalogoPublico();
+}
 
 // ── Mover categoria ──────────────────────────────────────────
 window.moverCategoria = async function (categoriaId, direcao) {
@@ -790,8 +1063,7 @@ window.moverCategoria = async function (categoriaId, direcao) {
     updateDoc(doc(db, "categorias", catA.id), { ordem: swapIdx }),
     updateDoc(doc(db, "categorias", catB.id), { ordem: idx })
   ]);
-  await carregarCategorias();
-  await carregarSelect();
+  await atualizarListasEPublicarCatalogo();
 };
 
 // ── Mover item ────────────────────────────────────────────────
@@ -812,6 +1084,7 @@ window.moverItem = async function (categoriaId, itemId, direcao) {
     updateDoc(doc(db, "categorias", categoriaId, "itens", itemB.id), { ordem: idx })
   ]);
   await toggleItensRecarregar(categoriaId);
+  await publicarCatalogoPublico();
 };
 
 // ── Duplicar item ─────────────────────────────────────────────
@@ -825,12 +1098,17 @@ window.duplicarItem = async function (categoriaId, itemId) {
   await addDoc(collection(db, "categorias", categoriaId, "itens"), {
     nome:      `${item.nome} (cópia)`,
     preco:     item.preco,
+    descricao: item.descricao || "",
     imagem:    item.imagem,
+    imagemThumb: item.imagemThumb || item.imagemMedium || item.imagem,
+    imagemMedium: item.imagemMedium || item.imagem,
+    imagemMeta: item.imagemMeta || null,
     disponivel: item.disponivel !== false,
     ordem:     maxOrdem + 1
   });
   mostrarMensagem("Item duplicado!", "sucesso");
   await toggleItensRecarregar(categoriaId);
+  await publicarCatalogoPublico();
 };
 
 // ── Toggle disponibilidade ────────────────────────────────────
@@ -841,6 +1119,7 @@ window.toggleDisponibilidade = async function (categoriaId, itemId, disponivel) 
     });
     mostrarMensagem(`Item marcado como ${!disponivel ? "disponível" : "indisponível"}!`, "sucesso");
     await toggleItensRecarregar(categoriaId);
+    await publicarCatalogoPublico();
   } catch (erro) {
     console.error(erro);
     mostrarMensagem("Erro ao atualizar disponibilidade!", "erro");
@@ -885,37 +1164,23 @@ document.getElementById("btnSalvarLoja").addEventListener("click", async (e) => 
 
   try {
     let urlCapa = "";
+    let capaMeta = null;
+    let uploadCapa = null;
 
     const configRef = doc(db, "config", "loja");
     const configSnap = await getDoc(configRef);
 
     if (configSnap.exists()) {
-      urlCapa = configSnap.data().capa || "";
+      const configAtual = configSnap.data();
+      urlCapa = configAtual.capa || "";
+      capaMeta = configAtual.capaMeta || null;
     }
 
     if (file) {
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-
-        reader.onloadend = () => {
-          try {
-            resolve(reader.result.split(",")[1]);
-          } catch (erro) {
-            reject(erro);
-          }
-        };
-
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-      const response = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY}`, {
-        method: "POST",
-        body: new URLSearchParams({ image: base64 })
-      });
-
-      const data = await response.json();
-      urlCapa = data.data.url;
+      botao.textContent = "Otimizando capa...";
+      uploadCapa = await uploadImagem(file, "capaLoja");
+      urlCapa = uploadCapa.url;
+      capaMeta = uploadCapa.meta;
     }
 
     await setDoc(doc(db, "config", "loja"), {
@@ -924,10 +1189,15 @@ document.getElementById("btnSalvarLoja").addEventListener("click", async (e) => 
       instagram,
       endereco,
       descricao,
-      capa: urlCapa
+      ...(uploadCapa ? camposCapa(uploadCapa) : { capa: urlCapa, capaMeta })
     });
 
-    mostrarMensagem("Configuração da loja salva!", "sucesso");
+    mostrarMensagem(
+      uploadCapa
+        ? `Configuração salva! ${resumoOtimizacao(uploadCapa)}`
+        : "Configuração da loja salva!",
+      "sucesso"
+    );
 
     document.getElementById("capaLoja").value = "";
 

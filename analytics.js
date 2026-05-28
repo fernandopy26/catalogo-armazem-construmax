@@ -58,8 +58,25 @@ function detectarOrigem() {
 function sanitizarChave(str) {
   return String(str)
     .slice(0, 40)
-    .replace(/[.#$\/\[\]]/g, "_")
+    .replace(/[.#$\/\[\]<>"'`\\]/g, "_")
     .trim() || "desconhecido";
+}
+
+function storageGet(storage, key) {
+  try { return storage.getItem(key); } catch { return null; }
+}
+
+function storageSet(storage, key, value) {
+  try { storage.setItem(key, value); return true; } catch { return false; }
+}
+
+function storageArray(storage, key) {
+  try {
+    const valor = JSON.parse(storage.getItem(key) || "[]");
+    return Array.isArray(valor) ? valor : [];
+  } catch {
+    return [];
+  }
 }
 
 /* =========================================================
@@ -78,7 +95,7 @@ async function escrever(campos) {
       // Documento não existe ainda (primeiro acesso do dia) — cria com setDoc.
       // setDoc não aceita dot-notation como caminho, então convertemos
       // os campos para objetos aninhados reais.
-      await setDoc(ref, construirInicial(campos));
+      await setDoc(ref, construirInicial(campos), { merge: true });
     }
   } catch {
     // Silencioso — analytics nunca deve quebrar o catálogo
@@ -86,7 +103,7 @@ async function escrever(campos) {
 }
 
 // Converte { "dispositivos.mobile": increment(1) }
-// para    { dispositivos: { mobile: 1 }, atualizado: serverTimestamp() }
+// para    { dispositivos: { mobile: increment(1) }, atualizado: serverTimestamp() }
 function construirInicial(campos) {
   const obj = { atualizado: serverTimestamp() };
   for (const caminho of Object.keys(campos)) {
@@ -96,7 +113,7 @@ function construirInicial(campos) {
       no[partes[i]] = no[partes[i]] || {};
       no = no[partes[i]];
     }
-    no[partes.at(-1)] = 1; // todos os campos de analytics começam em 1
+    no[partes.at(-1)] = campos[caminho];
   }
   return obj;
 }
@@ -116,20 +133,20 @@ export async function trackVisita() {
 
   const campos = {};
 
-  if (!localStorage.getItem(keyVisita)) {
-    localStorage.setItem(keyVisita, "1");
+  if (!storageGet(localStorage, keyVisita)) {
+    storageSet(localStorage, keyVisita, "1");
     campos["visitas_unicas"]                            = increment(1);
     campos[`dispositivos.${detectarDispositivo()}`]     = increment(1);
     campos[`navegadores.${detectarNavegador()}`]        = increment(1);
-    campos[`origens.${detectarOrigem()}`]               = increment(1);
+    campos[`origens.${sanitizarChave(detectarOrigem())}`] = increment(1);
   }
 
-  if (!sessionStorage.getItem(keySessao)) {
-    sessionStorage.setItem(keySessao, "1");
+  if (!storageGet(sessionStorage, keySessao)) {
+    storageSet(sessionStorage, keySessao, "1");
     campos["sessoes"] = increment(1);
   }
 
-  if (Object.keys(campos).length > 1) { // ao menos um campo além de atualizado
+  if (Object.keys(campos).length > 0) {
     await escrever(campos);
   }
 }
@@ -137,14 +154,13 @@ export async function trackVisita() {
 /**
  * Registra visualização de categoria (uma vez por sessão por categoria).
  */
-const _catsVistas = new Set(
-  JSON.parse(sessionStorage.getItem("cmax_cats") || "[]")
-);
+const CATS_KEY = `cmax_cats_${hoje()}`;
+const _catsVistas = new Set(storageArray(sessionStorage, CATS_KEY));
 
 export async function trackCategoria(nome) {
   if (!nome || _catsVistas.has(nome)) return;
   _catsVistas.add(nome);
-  sessionStorage.setItem("cmax_cats", JSON.stringify([..._catsVistas]));
+  storageSet(sessionStorage, CATS_KEY, JSON.stringify([..._catsVistas]));
 
   const chave = sanitizarChave(nome);
   await escrever({ [`categorias.${chave}`]: increment(1) });
@@ -152,7 +168,7 @@ export async function trackCategoria(nome) {
 
 /**
  * Registra clique no botão WhatsApp.
- * @param {"item"|"loja"} tipo
+ * @param {"item"|"loja"|"pedido"} tipo
  */
 export async function trackWhatsApp(tipo = "item") {
   await escrever({ [`eventos.whatsapp_${tipo}`]: increment(1) });
