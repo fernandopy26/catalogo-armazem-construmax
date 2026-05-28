@@ -4,7 +4,7 @@
  * Exibe notificação + fogos apenas uma vez por versão.
  */
 
-const CURRENT_VERSION = "2.3";
+const CURRENT_VERSION = "2.4";
 const LS_KEY          = "construmax_changelog_visto";
 
 /* =========================================================
@@ -13,10 +13,26 @@ const LS_KEY          = "construmax_changelog_visto";
 
 const VERSOES = [
   {
-    versao: "2.3",
-    data: "Junho 2026",
-    titulo: "Registro de atualizações",
+    versao: "2.4",
+    data: "Maio 2026",
+    titulo: "Catálogo mais rápido, moderno e seguro",
     atual: true,
+    itens: [
+      "Catálogo público otimizado com cache montado no Firestore e leitura mais rápida",
+      "Admin mais seguro com reautenticação Firebase antes de exclusões sensíveis",
+      "Upload de imagens com compressão, redimensionamento, WebP/JPEG leve e metadados de dimensão",
+      "Modal de detalhes do produto com imagem grande, descrição, WhatsApp e adicionar ao carrinho",
+      "Busca e filtros mais modernos, incluindo filtro por disponibilidade e carrinho fixo no celular",
+      "Ordenação de categorias e produtos por arrastar no painel admin",
+      "Estatísticas corrigidas para sessões, WhatsApp, carrinho, buscas e gráficos mais confiáveis",
+      "Performance melhorada com miniaturas, imagens responsivas, service worker versionado e página offline",
+      "Visual refinado com fundo amadeirado equilibrado para destacar melhor os produtos"
+    ]
+  },
+  {
+    versao: "2.3",
+    data: "Maio 2026",
+    titulo: "Registro de atualizações",
     itens: [
       "Painel de notas de atualização com histórico completo do sistema",
       "Notificação visual com animação de fogos ao detectar nova versão",
